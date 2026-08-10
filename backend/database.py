@@ -43,6 +43,7 @@ def init_db():
             plan_type TEXT DEFAULT 'FREE_TRIAL', -- FREE_TRIAL, PAID
             subscription_status TEXT DEFAULT 'Active', -- Active, Inactive
             trial_expires_at TEXT,
+            expires_at TEXT,
             stripe_customer_id TEXT
         )
     ''')
@@ -167,6 +168,14 @@ def init_db():
 
     conn.commit()
     seed_initial_data(cursor)
+    # Safety migration: Ensure expires_at exists in users table
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN expires_at TEXT")
+        conn.commit()
+    except Exception:
+        # Column already exists, safe to ignore
+        pass
+
     conn.commit()
     conn.close()
 
