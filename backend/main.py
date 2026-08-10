@@ -2,7 +2,15 @@ import sys
 
 
 
+
+
+
+
 import os
+
+
+
+
 
 
 
@@ -10,7 +18,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 
+
+
+
+
 import json
+
+
+
+
 
 
 
@@ -18,7 +34,15 @@ import os
 
 
 
+
+
+
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, WebSocket, WebSocketDisconnect
+
+
+
+
 
 
 
@@ -26,7 +50,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 
+
+
+
+
 from fastapi.staticfiles import StaticFiles
+
+
+
+
 
 
 
@@ -34,11 +66,23 @@ from pydantic import BaseModel
 
 
 
+
+
+
+
 from typing import List, Optional
 
 
 
+
+
+
+
 import uvicorn
+
+
+
+
 
 
 
@@ -50,7 +94,19 @@ from datetime import datetime, timedelta
 
 
 
+
+
+
+
+
+
+
+
 import database
+
+
+
+
 
 
 
@@ -58,7 +114,15 @@ import parser
 
 
 
+
+
+
+
 import accounting
+
+
+
+
 
 
 
@@ -66,7 +130,15 @@ import tax_engine
 
 
 
+
+
+
+
 import payroll
+
+
+
+
 
 
 
@@ -74,7 +146,19 @@ import invoicing
 
 
 
+
+
+
+
 import ai_agent
+
+
+
+
+
+
+
+
 
 
 
@@ -90,7 +174,19 @@ app = FastAPI(title="Rey Fiscal & ERP Suite Backend", version="1.0.0")
 
 
 
+
+
+
+
+
+
+
+
 # CORS setup
+
+
+
+
 
 
 
@@ -98,7 +194,15 @@ app.add_middleware(
 
 
 
+
+
+
+
     CORSMiddleware,
+
+
+
+
 
 
 
@@ -106,7 +210,15 @@ app.add_middleware(
 
 
 
+
+
+
+
     allow_credentials=True,
+
+
+
+
 
 
 
@@ -114,7 +226,15 @@ app.add_middleware(
 
 
 
+
+
+
+
     allow_headers=["*"],
+
+
+
+
 
 
 
@@ -126,11 +246,27 @@ app.add_middleware(
 
 
 
+
+
+
+
+
+
+
+
 class ConnectionManager:
 
 
 
+
+
+
+
     def __init__(self):
+
+
+
+
 
 
 
@@ -142,11 +278,27 @@ class ConnectionManager:
 
 
 
+
+
+
+
+
+
+
+
     async def connect(self, websocket: WebSocket):
 
 
 
+
+
+
+
         await websocket.accept()
+
+
+
+
 
 
 
@@ -158,7 +310,19 @@ class ConnectionManager:
 
 
 
+
+
+
+
+
+
+
+
     def disconnect(self, websocket: WebSocket):
+
+
+
+
 
 
 
@@ -170,7 +334,19 @@ class ConnectionManager:
 
 
 
+
+
+
+
+
+
+
+
     async def broadcast(self, message: dict):
+
+
+
+
 
 
 
@@ -178,7 +354,15 @@ class ConnectionManager:
 
 
 
+
+
+
+
             try:
+
+
+
+
 
 
 
@@ -186,11 +370,27 @@ class ConnectionManager:
 
 
 
+
+
+
+
             except Exception:
 
 
 
+
+
+
+
                 pass
+
+
+
+
+
+
+
+
 
 
 
@@ -206,11 +406,27 @@ manager = ConnectionManager()
 
 
 
+
+
+
+
+
+
+
+
 @app.on_event("startup")
 
 
 
+
+
+
+
 def startup_event():
+
+
+
+
 
 
 
@@ -222,7 +438,19 @@ def startup_event():
 
 
 
+
+
+
+
+
+
+
+
 def verify_premium_plan(org_id: int):
+
+
+
+
 
 
 
@@ -230,7 +458,15 @@ def verify_premium_plan(org_id: int):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -238,7 +474,15 @@ def verify_premium_plan(org_id: int):
 
 
 
+
+
+
+
     org = cursor.fetchone()
+
+
+
+
 
 
 
@@ -246,7 +490,15 @@ def verify_premium_plan(org_id: int):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -254,7 +506,15 @@ def verify_premium_plan(org_id: int):
 
 
 
+
+
+
+
         raise HTTPException(
+
+
+
+
 
 
 
@@ -262,7 +522,15 @@ def verify_premium_plan(org_id: int):
 
 
 
+
+
+
+
             detail="ACCESO DENEGADO: El modulo Premium (Invoicing/Payroll/Inventory) requiere suscripcion activa de PyME Total ($399/mes)."
+
+
+
+
 
 
 
@@ -274,7 +542,19 @@ def verify_premium_plan(org_id: int):
 
 
 
+
+
+
+
+
+
+
+
 @app.get("/api/status")
+
+
+
+
 
 
 
@@ -282,7 +562,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -290,7 +578,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     c.execute("SELECT COUNT(*) FROM cfdis WHERE organization_id = ?", (org_id,))
+
+
+
+
 
 
 
@@ -298,7 +594,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     c.execute("SELECT COUNT(*) FROM polizas WHERE organization_id = ?", (org_id,))
+
+
+
+
 
 
 
@@ -306,7 +610,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     c.execute("SELECT COUNT(*) FROM empleados WHERE organization_id = ?", (org_id,))
+
+
+
+
 
 
 
@@ -314,7 +626,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     c.execute("SELECT COUNT(*) FROM efos_blacklist")
+
+
+
+
 
 
 
@@ -322,7 +642,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -330,7 +658,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     org = dict(c.fetchone())
+
+
+
+
 
 
 
@@ -338,7 +674,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -346,7 +690,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
         "status": "healthy",
+
+
+
+
 
 
 
@@ -354,7 +706,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
         "polizas_count": polizas_count,
+
+
+
+
 
 
 
@@ -362,7 +722,15 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
         "efos_count": efos_count,
+
+
+
+
 
 
 
@@ -370,7 +738,19 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -386,7 +766,19 @@ def get_status(org_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 class AddOrgRequest(BaseModel):
+
+
+
+
 
 
 
@@ -394,7 +786,15 @@ class AddOrgRequest(BaseModel):
 
 
 
+
+
+
+
     razon_social: str
+
+
+
+
 
 
 
@@ -406,7 +806,19 @@ class AddOrgRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/v1/organizations/add")
+
+
+
+
 
 
 
@@ -414,7 +826,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -422,7 +842,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -430,7 +858,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+
+
 
 
 
@@ -438,7 +874,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         cursor.execute("""
+
+
+
+
 
 
 
@@ -446,7 +890,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             VALUES (?, ?, ?, 'FREE', 'Inactive', ?)
+
+
+
+
 
 
 
@@ -454,11 +906,23 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         org_id = cursor.lastrowid
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -466,7 +930,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         cursor.execute("""
+
+
+
+
 
 
 
@@ -474,7 +946,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             VALUES (?, ?, 'Full', ?)
+
+
+
+
 
 
 
@@ -482,7 +962,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -490,7 +978,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         accounts = [
+
+
+
+
 
 
 
@@ -498,7 +994,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('102.01', '10201', 'Bancos Nacionales', 1, 'Activo'),
+
+
+
+
 
 
 
@@ -506,7 +1010,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('115.01', '11501', 'Almacén / Inventario', 1, 'Activo'),
+
+
+
+
 
 
 
@@ -514,7 +1026,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('119.01', '11901', 'IVA Pendiente de Acreditar', 1, 'Activo'),
+
+
+
+
 
 
 
@@ -522,7 +1042,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('208.01', '20801', 'IVA Trasladado Cobrado', 1, 'Pasivo'),
+
+
+
+
 
 
 
@@ -530,7 +1058,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('301.01', '30101', 'Capital Social', 1, 'Capital'),
+
+
+
+
 
 
 
@@ -538,7 +1074,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('501.01', '50101', 'Costo de Ventas', 1, 'Costos'),
+
+
+
+
 
 
 
@@ -546,7 +1090,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             ('602.01', '60201', 'Sueldos y Salarios', 1, 'Gastos')
+
+
+
+
 
 
 
@@ -554,7 +1106,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         for cod, num, desc, niv, tipo in accounts:
+
+
+
+
 
 
 
@@ -562,7 +1122,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
                 INSERT OR IGNORE INTO catalogo_cuentas (organization_id, codigo_agrupador, num_cuenta, desc_cuenta, nivel, tipo_cuenta)
+
+
+
+
 
 
 
@@ -570,7 +1138,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
             """, (org_id, cod, num, desc, niv, tipo))
+
+
+
+
 
 
 
@@ -578,11 +1154,23 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         conn.commit()
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -590,7 +1178,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
     except Exception as e:
+
+
+
+
 
 
 
@@ -598,7 +1194,15 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -610,11 +1214,27 @@ def add_organization(req: AddOrgRequest, user_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 class LinkAccountantRequest(BaseModel):
 
 
 
+
+
+
+
     organization_id: int
+
+
+
+
 
 
 
@@ -626,7 +1246,19 @@ class LinkAccountantRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/v1/organizations/link-accountant")
+
+
+
+
 
 
 
@@ -634,7 +1266,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -642,7 +1282,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -650,7 +1298,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
     cursor.execute("SELECT id FROM users WHERE email = ? AND role = 'admin'", (req.accountant_email,))
+
+
+
+
 
 
 
@@ -658,11 +1314,23 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
     if not user:
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -670,7 +1338,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -678,7 +1354,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+
+
 
 
 
@@ -686,7 +1370,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
             INSERT OR IGNORE INTO accountant_organization_links (user_id, organization_id, permission_level, linked_at)
+
+
+
+
 
 
 
@@ -694,7 +1386,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
         """, (user['id'], req.organization_id, now_str))
+
+
+
+
 
 
 
@@ -702,7 +1402,15 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -710,11 +1418,23 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
     except Exception as e:
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -726,7 +1446,19 @@ def link_accountant(req: LinkAccountantRequest):
 
 
 
+
+
+
+
+
+
+
+
 @app.get("/api/v1/accountant/dashboard")
+
+
+
+
 
 
 
@@ -734,7 +1466,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -742,7 +1482,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -750,7 +1498,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     cursor.execute("""
+
+
+
+
 
 
 
@@ -758,7 +1514,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
         JOIN accountant_organization_links l ON o.id = l.organization_id
+
+
+
+
 
 
 
@@ -766,7 +1530,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     """, (user_id,))
+
+
+
+
 
 
 
@@ -774,7 +1546,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -782,7 +1562,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     for o in orgs:
+
+
+
+
 
 
 
@@ -790,7 +1578,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
         cursor.execute("SELECT COUNT(*) FROM cfdis WHERE organization_id = ?", (o['id'],))
+
+
+
+
 
 
 
@@ -798,7 +1594,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -806,11 +1610,23 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
         polizas_count = cursor.fetchone()[0]
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -818,7 +1634,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
             "id": o['id'],
+
+
+
+
 
 
 
@@ -826,7 +1650,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
             "razon_social": o['razon_social'],
+
+
+
+
 
 
 
@@ -834,7 +1666,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
             "subscription_status": o['subscription_status'],
+
+
+
+
 
 
 
@@ -842,7 +1682,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
             "polizas_count": polizas_count
+
+
+
+
 
 
 
@@ -850,7 +1698,15 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -858,7 +1714,19 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
     return dashboard_data
+
+
+
+
+
+
+
+
 
 
 
@@ -874,7 +1742,19 @@ def get_accountant_dashboard(user_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 @app.get("/api/organizations")
+
+
+
+
 
 
 
@@ -882,7 +1762,15 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
     # Retrieve only linked organizations for the dropdown switcher
+
+
+
+
 
 
 
@@ -890,7 +1778,15 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -898,7 +1794,15 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
         SELECT o.* FROM organizations o
+
+
+
+
 
 
 
@@ -906,7 +1810,15 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
         WHERE l.user_id = ?
+
+
+
+
 
 
 
@@ -914,7 +1826,15 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
     rows = [dict(r) for r in cursor.fetchall()]
+
+
+
+
 
 
 
@@ -922,7 +1842,19 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
     return rows
+
+
+
+
+
+
+
+
 
 
 
@@ -934,7 +1866,15 @@ def get_organizations(user_id: int = 1):
 
 
 
+
+
+
+
 def subscribe_org(org_id: int):
+
+
+
+
 
 
 
@@ -942,7 +1882,15 @@ def subscribe_org(org_id: int):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -950,7 +1898,15 @@ def subscribe_org(org_id: int):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -958,7 +1914,15 @@ def subscribe_org(org_id: int):
 
 
 
+
+
+
+
         UPDATE organizations 
+
+
+
+
 
 
 
@@ -966,7 +1930,15 @@ def subscribe_org(org_id: int):
 
 
 
+
+
+
+
         WHERE id = ?
+
+
+
+
 
 
 
@@ -974,11 +1946,23 @@ def subscribe_org(org_id: int):
 
 
 
+
+
+
+
     conn.commit()
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -990,7 +1974,19 @@ def subscribe_org(org_id: int):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/organizations/{org_id}/unsubscribe")
+
+
+
+
 
 
 
@@ -998,7 +1994,15 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -1006,7 +2010,15 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
     cursor.execute("""
+
+
+
+
 
 
 
@@ -1014,7 +2026,15 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
         SET plan_type = 'FREE', subscription_status = 'Inactive', expires_at = NULL
+
+
+
+
 
 
 
@@ -1022,7 +2042,15 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
     """, (org_id,))
+
+
+
+
 
 
 
@@ -1030,7 +2058,15 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -1042,7 +2078,19 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
+
+
+
+
 # CFDIs Endpoints
+
+
+
+
 
 
 
@@ -1050,7 +2098,15 @@ def unsubscribe_org(org_id: int):
 
 
 
+
+
+
+
 def get_cfdis(org_id: int = 1):
+
+
+
+
 
 
 
@@ -1058,7 +2114,15 @@ def get_cfdis(org_id: int = 1):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -1066,7 +2130,15 @@ def get_cfdis(org_id: int = 1):
 
 
 
+
+
+
+
     rows = [dict(r) for r in cursor.fetchall()]
+
+
+
+
 
 
 
@@ -1074,7 +2146,19 @@ def get_cfdis(org_id: int = 1):
 
 
 
+
+
+
+
     return rows
+
+
+
+
+
+
+
+
 
 
 
@@ -1086,7 +2170,15 @@ def get_cfdis(org_id: int = 1):
 
 
 
+
+
+
+
 async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
+
+
+
+
 
 
 
@@ -1094,7 +2186,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         xml_content = await file.read()
+
+
+
+
 
 
 
@@ -1102,11 +2202,23 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         parsed = parser.parse_cfdi_xml(xml_str)
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1114,7 +2226,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -1122,7 +2242,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         is_efos = cursor.fetchone()[0] > 0
+
+
+
+
 
 
 
@@ -1130,7 +2258,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1138,7 +2274,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
             INSERT OR REPLACE INTO cfdis (
+
+
+
+
 
 
 
@@ -1146,7 +2290,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
                 tipo, fecha, subtotal, descuento, impuestos_trasladados, impuestos_retenidos,
+
+
+
+
 
 
 
@@ -1154,7 +2306,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+
+
+
 
 
 
@@ -1162,7 +2322,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
             org_id, parsed['uuid'], parsed['emisor_rfc'], parsed['emisor_nombre'],
+
+
+
+
 
 
 
@@ -1170,7 +2338,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
             parsed['subtotal'], parsed['descuento'], parsed['impuestos_trasladados'], parsed['impuestos_retenidos'],
+
+
+
+
 
 
 
@@ -1178,7 +2354,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         ))
+
+
+
+
 
 
 
@@ -1186,7 +2370,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         poliza_data = accounting.generate_auto_poliza(parsed)
+
+
+
+
 
 
 
@@ -1194,7 +2386,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         if cursor.fetchone()[0] == 0:
+
+
+
+
 
 
 
@@ -1202,7 +2402,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
                 INSERT INTO polizas (organization_id, tipo, numero, fecha, concepto, cargos_abonos_json, xml_uuid)
+
+
+
+
 
 
 
@@ -1210,7 +2418,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
             """, (
+
+
+
+
 
 
 
@@ -1218,7 +2434,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
                 json.dumps(poliza_data['cargos_abonos']), parsed['uuid']
+
+
+
+
 
 
 
@@ -1226,7 +2450,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
             
+
+
+
+
 
 
 
@@ -1234,7 +2466,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -1242,11 +2482,23 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
         return {"status": "success", "uuid": parsed['uuid'], "efos_status": efos_status}
 
 
 
+
+
+
+
     except Exception as e:
+
+
+
+
 
 
 
@@ -1258,7 +2510,19 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
+
+
+
+
 # Pólizas
+
+
+
+
 
 
 
@@ -1266,7 +2530,15 @@ async def upload_cfdi(file: UploadFile = File(...), org_id: int = Form(1)):
 
 
 
+
+
+
+
 def get_polizas(org_id: int = 1):
+
+
+
+
 
 
 
@@ -1274,7 +2546,15 @@ def get_polizas(org_id: int = 1):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -1282,7 +2562,15 @@ def get_polizas(org_id: int = 1):
 
 
 
+
+
+
+
     rows = []
+
+
+
+
 
 
 
@@ -1290,7 +2578,15 @@ def get_polizas(org_id: int = 1):
 
 
 
+
+
+
+
         row_dict = dict(r)
+
+
+
+
 
 
 
@@ -1298,7 +2594,15 @@ def get_polizas(org_id: int = 1):
 
 
 
+
+
+
+
         rows.append(row_dict)
+
+
+
+
 
 
 
@@ -1306,7 +2610,19 @@ def get_polizas(org_id: int = 1):
 
 
 
+
+
+
+
     return rows
+
+
+
+
+
+
+
+
 
 
 
@@ -1318,7 +2634,15 @@ def get_polizas(org_id: int = 1):
 
 
 
+
+
+
+
 @app.get("/api/accounts")
+
+
+
+
 
 
 
@@ -1326,7 +2650,15 @@ def get_accounts(org_id: int = 1):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -1334,7 +2666,15 @@ def get_accounts(org_id: int = 1):
 
 
 
+
+
+
+
     cursor.execute("SELECT * FROM catalogo_cuentas WHERE organization_id = ? ORDER BY num_cuenta ASC", (org_id,))
+
+
+
+
 
 
 
@@ -1342,11 +2682,27 @@ def get_accounts(org_id: int = 1):
 
 
 
+
+
+
+
     conn.close()
 
 
 
+
+
+
+
     return rows
+
+
+
+
+
+
+
+
 
 
 
@@ -1358,7 +2714,15 @@ def get_accounts(org_id: int = 1):
 
 
 
+
+
+
+
 @app.get("/api/taxes")
+
+
+
+
 
 
 
@@ -1366,7 +2730,15 @@ def get_taxes(org_id: int = 1):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -1374,7 +2746,15 @@ def get_taxes(org_id: int = 1):
 
 
 
+
+
+
+
     cursor.execute("SELECT * FROM cfdis WHERE organization_id = ?", (org_id,))
+
+
+
+
 
 
 
@@ -1382,7 +2762,15 @@ def get_taxes(org_id: int = 1):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -1394,7 +2782,19 @@ def get_taxes(org_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 # Employees List
+
+
+
+
 
 
 
@@ -1402,7 +2802,15 @@ def get_taxes(org_id: int = 1):
 
 
 
+
+
+
+
 def get_employees(org_id: int = 1):
+
+
+
+
 
 
 
@@ -1410,7 +2818,15 @@ def get_employees(org_id: int = 1):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -1418,11 +2834,23 @@ def get_employees(org_id: int = 1):
 
 
 
+
+
+
+
     rows = [dict(r) for r in cursor.fetchall()]
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -1434,7 +2862,19 @@ def get_employees(org_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 class PayrollCalcRequest(BaseModel):
+
+
+
+
 
 
 
@@ -1442,11 +2882,23 @@ class PayrollCalcRequest(BaseModel):
 
 
 
+
+
+
+
     fecha_baja: Optional[str] = None
 
 
 
+
+
+
+
     tipo_baja: str = "renuncia"
+
+
+
+
 
 
 
@@ -1462,7 +2914,23 @@ class PayrollCalcRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 class EmployeeCreateRequest(BaseModel):
+
+
+
+
 
 
 
@@ -1470,7 +2938,15 @@ class EmployeeCreateRequest(BaseModel):
 
 
 
+
+
+
+
     rfc: str
+
+
+
+
 
 
 
@@ -1482,7 +2958,19 @@ class EmployeeCreateRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/employees")
+
+
+
+
 
 
 
@@ -1490,7 +2978,15 @@ def add_employee(req: EmployeeCreateRequest, org_id: int = 1):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -1498,7 +2994,15 @@ def add_employee(req: EmployeeCreateRequest, org_id: int = 1):
 
 
 
+
+
+
+
     # Insert with mock CURP/NSS/date for test ease
+
+
+
+
 
 
 
@@ -1506,7 +3010,15 @@ def add_employee(req: EmployeeCreateRequest, org_id: int = 1):
 
 
 
+
+
+
+
         INSERT INTO empleados (organization_id, nombre, rfc, curp, nss, fecha_ingreso, salario_diario)
+
+
+
+
 
 
 
@@ -1514,7 +3026,15 @@ def add_employee(req: EmployeeCreateRequest, org_id: int = 1):
 
 
 
+
+
+
+
     """, (org_id, req.nombre, req.rfc, req.salario_diario))
+
+
+
+
 
 
 
@@ -1522,7 +3042,15 @@ def add_employee(req: EmployeeCreateRequest, org_id: int = 1):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -1534,7 +3062,19 @@ def add_employee(req: EmployeeCreateRequest, org_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/payroll/calculate")
+
+
+
+
 
 
 
@@ -1542,11 +3082,23 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     verify_premium_plan(org_id)
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1554,7 +3106,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -1562,7 +3122,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     emp = cursor.fetchone()
+
+
+
+
 
 
 
@@ -1570,7 +3138,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -1578,11 +3154,23 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     emp = dict(emp)
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1590,7 +3178,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         desglose = payroll.calculate_finiquito_liquidacion(
+
+
+
+
 
 
 
@@ -1598,11 +3194,23 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
             fecha_baja_str=req.fecha_baja,
 
 
 
+
+
+
+
             salario_diario=emp['salario_diario'],
+
+
+
+
 
 
 
@@ -1610,7 +3218,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
             dias_aguinaldo=emp['dias_aguinaldo'],
+
+
+
+
 
 
 
@@ -1618,7 +3234,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         )
+
+
+
+
 
 
 
@@ -1626,7 +3250,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         tipo_calc = 'Finiquito' if req.tipo_baja == 'renuncia' else 'Liquidacion'
+
+
+
+
 
 
 
@@ -1634,7 +3266,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         calc = payroll.calculate_payroll_receipt(
+
+
+
+
 
 
 
@@ -1642,7 +3282,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
             dias_trabajados=req.dias_trabajados,
+
+
+
+
 
 
 
@@ -1650,7 +3298,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         )
+
+
+
+
 
 
 
@@ -1658,7 +3314,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         total_neto = calc['neto_pagar']
+
+
+
+
 
 
 
@@ -1666,7 +3330,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1674,7 +3346,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     cursor.execute("""
+
+
+
+
 
 
 
@@ -1682,7 +3362,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         VALUES (?, ?, ?, ?, ?, ?)
+
+
+
+
 
 
 
@@ -1690,7 +3378,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1698,7 +3394,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -1706,7 +3410,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         "empleado": emp['nombre'],
+
+
+
+
 
 
 
@@ -1714,7 +3426,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         "fecha": now_str,
+
+
+
+
 
 
 
@@ -1722,7 +3442,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
         "desglose": desglose
+
+
+
+
 
 
 
@@ -1734,7 +3462,19 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
+
+
+
+
 # EFOS List
+
+
+
+
 
 
 
@@ -1742,7 +3482,15 @@ def calculate_payroll(req: PayrollCalcRequest, org_id: int = 1):
 
 
 
+
+
+
+
 def get_efos():
+
+
+
+
 
 
 
@@ -1750,7 +3498,15 @@ def get_efos():
 
 
 
+
+
+
+
     cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -1758,11 +3514,23 @@ def get_efos():
 
 
 
+
+
+
+
     rows = [dict(r) for r in cursor.fetchall()]
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -1774,7 +3542,19 @@ def get_efos():
 
 
 
+
+
+
+
+
+
+
+
 class ChatRequest(BaseModel):
+
+
+
+
 
 
 
@@ -1786,7 +3566,19 @@ class ChatRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/chat")
+
+
+
+
 
 
 
@@ -1794,7 +3586,15 @@ def chat_endpoint(req: ChatRequest):
 
 
 
+
+
+
+
     reply = ai_agent.query_rey_ai(req.message)
+
+
+
+
 
 
 
@@ -1806,7 +3606,19 @@ def chat_endpoint(req: ChatRequest):
 
 
 
+
+
+
+
+
+
+
+
 @app.websocket("/ws/sync")
+
+
+
+
 
 
 
@@ -1814,7 +3626,15 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 
+
+
+
+
     await manager.connect(websocket)
+
+
+
+
 
 
 
@@ -1822,7 +3642,15 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 
+
+
+
+
         while True:
+
+
+
+
 
 
 
@@ -1830,7 +3658,15 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 
+
+
+
+
             await websocket.send_json({"event": "pong", "payload": data})
+
+
+
+
 
 
 
@@ -1838,7 +3674,19 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 
+
+
+
+
         manager.disconnect(websocket)
+
+
+
+
+
+
+
+
 
 
 
@@ -1854,7 +3702,19 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 
+
+
+
+
+
+
+
+
 # Auth Models
+
+
+
+
 
 
 
@@ -1862,7 +3722,15 @@ class SignupRequest(BaseModel):
 
 
 
+
+
+
+
     username: str
+
+
+
+
 
 
 
@@ -1870,11 +3738,23 @@ class SignupRequest(BaseModel):
 
 
 
+
+
+
+
     email: str
 
 
 
+
+
+
+
     rfc: str
+
+
+
+
 
 
 
@@ -1886,11 +3766,27 @@ class SignupRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 class LoginRequest(BaseModel):
 
 
 
+
+
+
+
     username: str
+
+
+
+
 
 
 
@@ -1902,7 +3798,19 @@ class LoginRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/v1/auth/signup")
+
+
+
+
 
 
 
@@ -1910,7 +3818,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -1918,7 +3834,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1926,7 +3850,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         # Create default organization for user
+
+
+
+
 
 
 
@@ -1934,7 +3866,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         cursor.execute("""
+
+
+
+
 
 
 
@@ -1942,7 +3882,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             VALUES (?, ?, 'FREE', 'Inactive', ?)
+
+
+
+
 
 
 
@@ -1950,11 +3898,23 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         org_id = cursor.lastrowid
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1962,11 +3922,23 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         trial_expiry = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
 
 
 
+
+
+
+
         cursor.execute("""
+
+
+
+
 
 
 
@@ -1974,7 +3946,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             VALUES (?, ?, ?, 'admin', 'FREE_TRIAL', 'Active', ?)
+
+
+
+
 
 
 
@@ -1982,11 +3962,23 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         user_id = cursor.lastrowid
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1994,7 +3986,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         cursor.execute("""
+
+
+
+
 
 
 
@@ -2002,7 +4002,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             VALUES (?, ?, 'Full', ?)
+
+
+
+
 
 
 
@@ -2010,7 +4018,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2018,7 +4034,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         accounts = [
+
+
+
+
 
 
 
@@ -2026,7 +4050,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('102.01', '10201', 'Bancos Nacionales', 1, 'Activo'),
+
+
+
+
 
 
 
@@ -2034,7 +4066,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('115.01', '11501', 'Almacén / Inventario', 1, 'Activo'),
+
+
+
+
 
 
 
@@ -2042,7 +4082,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('119.01', '11901', 'IVA Pendiente de Acreditar', 1, 'Activo'),
+
+
+
+
 
 
 
@@ -2050,7 +4098,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('208.01', '20801', 'IVA Trasladado Cobrado', 1, 'Pasivo'),
+
+
+
+
 
 
 
@@ -2058,7 +4114,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('301.01', '30101', 'Capital Social', 1, 'Capital'),
+
+
+
+
 
 
 
@@ -2066,7 +4130,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('501.01', '50101', 'Costo de Ventas', 1, 'Costos'),
+
+
+
+
 
 
 
@@ -2074,7 +4146,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             ('602.01', '60201', 'Sueldos y Salarios', 1, 'Gastos')
+
+
+
+
 
 
 
@@ -2082,7 +4162,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         for cod, num, desc, niv, tipo in accounts:
+
+
+
+
 
 
 
@@ -2090,7 +4178,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
                 INSERT OR IGNORE INTO catalogo_cuentas (organization_id, codigo_agrupador, num_cuenta, desc_cuenta, nivel, tipo_cuenta)
+
+
+
+
 
 
 
@@ -2098,7 +4194,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
             """, (org_id, cod, num, desc, niv, tipo))
+
+
+
+
 
 
 
@@ -2106,11 +4210,23 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         conn.commit()
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -2118,7 +4234,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
     except Exception as e:
+
+
+
+
 
 
 
@@ -2126,7 +4250,15 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -2138,7 +4270,19 @@ def signup(req: SignupRequest):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/v1/auth/login")
+
+
+
+
 
 
 
@@ -2146,7 +4290,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -2154,7 +4306,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     cursor.execute("SELECT * FROM users WHERE username = ? AND password_hash = ?", (req.username, req.password))
+
+
+
+
 
 
 
@@ -2162,7 +4322,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2170,7 +4338,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
         conn.close()
+
+
+
+
 
 
 
@@ -2178,7 +4354,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2186,7 +4370,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     cursor.execute("""
+
+
+
+
 
 
 
@@ -2194,7 +4386,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
         JOIN accountant_organization_links l ON o.id = l.organization_id
+
+
+
+
 
 
 
@@ -2202,7 +4402,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     """, (user['id'],))
+
+
+
+
 
 
 
@@ -2210,7 +4418,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -2218,7 +4434,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
     return {
+
+
+
+
 
 
 
@@ -2226,7 +4450,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
         "user": {
+
+
+
+
 
 
 
@@ -2234,7 +4466,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
             "username": user['username'],
+
+
+
+
 
 
 
@@ -2242,7 +4482,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
             "role": user['role'],
+
+
+
+
 
 
 
@@ -2250,7 +4498,15 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
             "subscription_status": user['subscription_status'],
+
+
+
+
 
 
 
@@ -2258,11 +4514,23 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         "organizations": orgs
+
+
+
+
 
 
 
@@ -2274,7 +4542,19 @@ def login(req: LoginRequest):
 
 
 
+
+
+
+
+
+
+
+
 # Pricing Information
+
+
+
+
 
 
 
@@ -2282,7 +4562,15 @@ PRICING_PLANS = {
 
 
 
+
+
+
+
     "STARTER": {"price": 499, "desc": "Nómina hasta 10 empleados + Facturación"},
+
+
+
+
 
 
 
@@ -2290,7 +4578,15 @@ PRICING_PLANS = {
 
 
 
+
+
+
+
     "ESCALA": {"price": 1299, "desc": "Nómina hasta 100 empleados + CxC/CxP"}
+
+
+
+
 
 
 
@@ -2302,11 +4598,27 @@ PRICING_PLANS = {
 
 
 
+
+
+
+
+
+
+
+
 @app.get("/api/v1/subscription/pricing")
 
 
 
+
+
+
+
 def get_pricing():
+
+
+
+
 
 
 
@@ -2318,7 +4630,19 @@ def get_pricing():
 
 
 
+
+
+
+
+
+
+
+
 class UpgradePlanRequest(BaseModel):
+
+
+
+
 
 
 
@@ -2330,7 +4654,19 @@ class UpgradePlanRequest(BaseModel):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/organizations/{org_id}/upgrade")
+
+
+
+
 
 
 
@@ -2338,7 +4674,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
     tier = req.plan_tier.upper()
+
+
+
+
 
 
 
@@ -2346,7 +4690,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
         raise HTTPException(status_code=400, detail="Plan seleccionado invalido")
+
+
+
+
 
 
 
@@ -2354,7 +4706,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -2362,11 +4722,23 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
     expiry_date = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2374,7 +4746,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
         UPDATE organizations 
+
+
+
+
 
 
 
@@ -2382,7 +4762,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
         WHERE id = ?
+
+
+
+
 
 
 
@@ -2390,7 +4778,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2398,7 +4794,15 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -2410,7 +4814,19 @@ def upgrade_organization_plan(org_id: int, req: UpgradePlanRequest):
 
 
 
+
+
+
+
+
+
+
+
 @app.get("/api/v1/users/{user_id}/status")
+
+
+
+
 
 
 
@@ -2418,7 +4834,15 @@ def get_user_status(user_id: int):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -2426,7 +4850,15 @@ def get_user_status(user_id: int):
 
 
 
+
+
+
+
     cursor.execute("SELECT id, username, email, role, plan_type, subscription_status, trial_expires_at, expires_at FROM users WHERE id = ?", (user_id,))
+
+
+
+
 
 
 
@@ -2434,7 +4866,15 @@ def get_user_status(user_id: int):
 
 
 
+
+
+
+
     conn.close()
+
+
+
+
 
 
 
@@ -2442,7 +4882,15 @@ def get_user_status(user_id: int):
 
 
 
+
+
+
+
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+
+
+
 
 
 
@@ -2454,7 +4902,19 @@ def get_user_status(user_id: int):
 
 
 
+
+
+
+
+
+
+
+
 @app.post("/api/v1/users/{user_id}/upgrade")
+
+
+
+
 
 
 
@@ -2462,7 +4922,15 @@ def upgrade_user(user_id: int):
 
 
 
+
+
+
+
     conn = database.get_connection()
+
+
+
+
 
 
 
@@ -2470,7 +4938,15 @@ def upgrade_user(user_id: int):
 
 
 
+
+
+
+
     expiry_date = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S')
+
+
+
+
 
 
 
@@ -2478,7 +4954,15 @@ def upgrade_user(user_id: int):
 
 
 
+
+
+
+
         UPDATE users 
+
+
+
+
 
 
 
@@ -2486,7 +4970,15 @@ def upgrade_user(user_id: int):
 
 
 
+
+
+
+
         WHERE id = ?
+
+
+
+
 
 
 
@@ -2494,7 +4986,15 @@ def upgrade_user(user_id: int):
 
 
 
+
+
+
+
     conn.commit()
+
+
+
+
 
 
 
@@ -2502,11 +5002,23 @@ def upgrade_user(user_id: int):
 
 
 
+
+
+
+
     return {"status": "success", "plan_type": "PAID", "subscription_status": "Active"}
 
 
 
+
+
+
+
 frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
+
+
+
+
 
 
 
@@ -2518,11 +5030,27 @@ app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
 
 
 
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
 
 
 
+
+
+
+
     uvicorn.run(app, host="127.0.0.1", port=8020)
+
+
+
+
 
 
 

@@ -453,12 +453,38 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1">Otros Bonos y Comisiones ($)</label>
-                                <input type="number" id="calc-bonos" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                                <label class="text-xs text-slate-400 block mb-1">Fondo de Ahorro (%) <span class="text-[9px] text-slate-500">(0% = Desactivado)</span></label>
+                                <input type="number" id="calc-fondo-ahorro" value="10" min="0" max="30" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
                             </div>
                             <div>
-                                <label class="text-xs text-slate-400 block mb-1">Fondo de Ahorro (%)</label>
-                                <input type="number" id="calc-fondo-ahorro" value="10" min="0" max="30" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                                <label class="text-xs text-slate-400 block mb-1">Días de Aguinaldo (LFT Mínimo: 15)</label>
+                                <input type="number" id="calc-dias-aguinaldo" value="15" min="15" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Prima Vacacional (%)</label>
+                                <input type="number" id="calc-prima-vacacional" value="25" min="25" max="100" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Infonavit ($)</label>
+                                    <input type="number" id="calc-infonavit" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-2 text-xs font-mono text-rose-400">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">FONACOT ($)</label>
+                                    <input type="number" id="calc-fonacot" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded px-2 py-2 text-xs font-mono text-rose-400">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Dynamic Perception Concepts Section -->
+                        <div class="border border-slate-800/60 p-4 rounded-xl space-y-3 bg-slate-950/40">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xs font-bold text-slate-300">Percepciones y Bonos Adicionales</h4>
+                                <button type="button" onclick="addCustomBonusConcept()" class="px-2 py-0.5 bg-cyanNeon/10 hover:bg-cyanNeon/20 text-cyanNeon rounded text-[9px] font-bold border border-cyanNeon/20 cursor-pointer">+ Bono</button>
+                            </div>
+                            <div id="custom-bonuses-list" class="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                                <span class="text-[10px] text-slate-600 italic">No hay percepciones adicionales registradas.</span>
                             </div>
                         </div>
                         <div>
