@@ -103,10 +103,37 @@ manager = ConnectionManager()
 
 
 @app.on_event("startup")
-
 def startup_event():
-
     database.init_db()
+    # Fail-safe database migration for inventarios table
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS inventarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                organization_id INTEGER,
+                nombre TEXT NOT NULL,
+                cantidad REAL DEFAULT 0.0,
+                unidad TEXT DEFAULT 'Pza',
+                fecha_actualizacion TEXT,
+                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+            )
+        """)
+        conn.commit()
+        
+        # Check if we need to seed the new inventarios table
+        cursor.execute("SELECT COUNT(*) FROM inventarios")
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("INSERT INTO inventarios (organization_id, nombre, cantidad, unidad, fecha_actualizacion) VALUES (2, 'Arroz', 120.0, 'Kg', '2026-08-10 12:00:00')")
+            cursor.execute("INSERT INTO inventarios (organization_id, nombre, cantidad, unidad, fecha_actualizacion) VALUES (2, 'Frijol', 85.0, 'Kg', '2026-08-10 12:00:00')")
+            cursor.execute("INSERT INTO inventarios (organization_id, nombre, cantidad, unidad, fecha_actualizacion) VALUES (2, 'Leche Entera', 45.0, 'Litros', '2026-08-10 12:00:00')")
+            cursor.execute("INSERT INTO inventarios (organization_id, nombre, cantidad, unidad, fecha_actualizacion) VALUES (2, 'Aceite Vegetal', 20.0, 'Litros', '2026-08-10 12:00:00')")
+            conn.commit()
+    except Exception as e:
+        print("Migration error:", e)
+    finally:
+        conn.close()
 
 
 
