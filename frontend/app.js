@@ -114,7 +114,7 @@ async function loadOrganizations() {
     }
 }
 
-async function changeActiveOrganization(id) {
+async function changeActiveOrg(id) {
     activeOrgId = parseInt(id);
     await loadOrganizations();
 }

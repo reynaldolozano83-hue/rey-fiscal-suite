@@ -226,3 +226,25 @@ body.light-theme #org-switcher option {
     background-color: #ffffff !important;
     color: #0f172a !important;
 }
+
+/* Custom dropdown styling overrides for Light/Dark themes */
+body.light-theme #custom-org-btn {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.light-theme #custom-org-menu {
+    background-color: #ffffff !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme #custom-org-list button {
+    color: #475569 !important;
+}
+
+body.light-theme #custom-org-list button:hover {
+    background-color: rgba(15, 23, 42, 0.04) !important;
+    color: #0f172a !important;
+}
