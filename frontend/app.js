@@ -2,7 +2,19 @@ let activeUserId = 1;
 
 
 
+
+
+
+
 // App Controller for Rey Fiscal Suite
+
+
+
+
+
+
+
+
 
 
 
@@ -12,13 +24,25 @@ let activeUserId = 1;
 
 const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
 
+
+
     ? "http://127.0.0.1:8020/api"
+
+
 
     : `${window.location.origin}/api`;
 
 
 
+
+
+
+
 let currentTab = "dashboard";
+
+
+
+
 
 
 
@@ -30,7 +54,19 @@ let selectedEmployee = null;
 
 
 
+
+
+
+
+
+
+
+
 let activeOrgId = 1;
+
+
+
+
 
 
 
@@ -42,7 +78,19 @@ let currentOrg = null;
 
 
 
+
+
+
+
+
+
+
+
 // Tab management
+
+
+
+
 
 
 
@@ -50,7 +98,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
     document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+
+
+
+
 
 
 
@@ -58,7 +114,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -66,11 +130,23 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
     document.getElementById(`btn-${tabId}`).classList.add("active");
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -78,7 +154,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
         'dashboard': ['Command Center', 'Resumen fiscal de facturas y obligaciones del periodo.'],
+
+
+
+
 
 
 
@@ -86,7 +170,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
         'policy-builder': ['Policy Builder', 'Asiento contable automático generado mediante reglas de negocio.'],
+
+
+
+
 
 
 
@@ -94,7 +186,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
         'payroll-hr': ['Payroll & LFT', 'Cálculos de nómina quincenal, fondo de ahorro, finiquitos y liquidaciones.'],
+
+
+
+
 
 
 
@@ -102,11 +202,23 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -114,11 +226,23 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
     document.getElementById("view-subtitle").innerText = titles[tabId][1];
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -126,7 +250,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -134,7 +266,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
         checkPaywallStatus();
+
+
+
+
 
 
 
@@ -142,7 +282,19 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -154,7 +306,15 @@ function switchTab(tabId) {
 
 
 
+
+
+
+
 function checkPaywallStatus() {
+
+
+
+
 
 
 
@@ -162,7 +322,15 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
     if (!paywall) return;
+
+
+
+
 
 
 
@@ -170,7 +338,15 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
     // Allow access if plan is STARTER, CRECIMIENTO or ESCALA and Active
+
+
+
+
 
 
 
@@ -178,7 +354,15 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
                        ['STARTER', 'CRECIMIENTO', 'ESCALA', 'PREMIUM'].includes(currentOrg.plan_type) && 
+
+
+
+
 
 
 
@@ -186,7 +370,15 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
                        
+
+
+
+
 
 
 
@@ -194,7 +386,15 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
         paywall.classList.add("hidden");
+
+
+
+
 
 
 
@@ -202,7 +402,15 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
         paywall.classList.remove("hidden");
+
+
+
+
 
 
 
@@ -210,7 +418,19 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -222,11 +442,23 @@ function checkPaywallStatus() {
 
 
 
+
+
+
+
 async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -234,7 +466,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -242,11 +482,23 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
             body: JSON.stringify({ plan_tier: planTier })
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -254,7 +506,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
         if (data.status === 'success') {
+
+
+
+
 
 
 
@@ -262,7 +522,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
             await loadOrganizations();
+
+
+
+
 
 
 
@@ -270,7 +538,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
         } else {
+
+
+
+
 
 
 
@@ -278,7 +554,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -286,7 +570,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
         console.error(e);
+
+
+
+
 
 
 
@@ -294,7 +586,15 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -306,135 +606,275 @@ async function triggerUpgradeProcess(planTier) {
 
 
 
+
+
+
+
+
+
+
+
 // Load organizations for switcher
+
+
+
+
 
 
 
 // Toggle custom dropdown menu
 
+
+
 function toggleCustomDropdown() {
+
+
 
     const menu = document.getElementById("custom-org-menu");
 
+
+
     menu.classList.toggle("hidden");
 
+
+
 }
+
+
+
+
 
 
 
 // Close when clicking outside
 
+
+
 window.addEventListener("click", (e) => {
+
+
 
     const btn = document.getElementById("custom-org-btn");
 
+
+
     const menu = document.getElementById("custom-org-menu");
+
+
 
     if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
 
+
+
         menu.classList.add("hidden");
 
+
+
     }
+
+
 
 });
 
 
 
+
+
+
+
 // Load organizations for switcher
+
+
 
 async function loadOrganizations() {
 
+
+
     try {
+
+
 
         const res = await fetch(`${API_BASE}/organizations`);
 
+
+
         const orgs = await res.json();
 
+
+
         
+
+
 
         const listContainer = document.getElementById("custom-org-list");
 
+
+
         if (!listContainer) return;
+
+
 
         listContainer.innerHTML = "";
 
+
+
         
+
+
 
         // Find current organization
 
+
+
         currentOrg = orgs.find(o => o.id === activeOrgId) || orgs[0];
 
+
+
         if (currentOrg) {
+
+
 
             activeOrgId = currentOrg.id;
 
+
+
             document.getElementById("selected-org-name").innerText = `${currentOrg.rfc} - ${currentOrg.razon_social.substring(0,12)}...`;
+
+
 
         }
 
+
+
         
+
+
 
         orgs.forEach(o => {
 
+
+
             const btn = document.createElement("button");
+
+
 
             btn.className = "block w-full text-left px-4 py-2 hover:bg-slate-900 hover:text-white text-slate-300 transition-colors";
 
+
+
             btn.innerText = `${o.rfc} - ${o.razon_social.substring(0,18)}...`;
+
+
 
             btn.onclick = async () => {
 
+
+
                 activeOrgId = o.id;
+
+
 
                 document.getElementById("custom-org-menu").classList.add("hidden");
 
+
+
                 await loadOrganizations();
+
+
 
                 await loadDashboardData();
 
+
+
                 await loadPolizas();
+
+
 
                 await loadEmployees();
 
+
+
             };
+
+
 
             listContainer.appendChild(btn);
 
+
+
         });
 
+
+
         
+
+
 
         if (currentOrg) {
 
+
+
             document.getElementById("org-plan-badge").innerText = currentOrg.plan_type;
+
+
 
             const indicator = document.getElementById("org-status-indicator");
 
+
+
             if (currentOrg.plan_type === 'PREMIUM') {
+
+
 
                 indicator.className = "w-2.5 h-2.5 rounded-full bg-cyanNeon shadow-lg shadow-cyanNeon/50";
 
+
+
             } else {
+
+
 
                 indicator.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
 
+
+
             }
+
+
 
         }
 
+
+
         
+
+
 
         checkPaywallStatus();
 
+
+
         await loadAccountantStatus();
+
+
 
     } catch (e) {
 
+
+
         console.error("Error loading organizations:", e);
+
+
 
     }
 
+
+
 }
+
+
+
+
 
 
 
@@ -442,7 +882,15 @@ async function changeActiveOrg(id) {
 
 
 
+
+
+
+
     activeOrgId = parseInt(id);
+
+
+
+
 
 
 
@@ -450,7 +898,19 @@ async function changeActiveOrg(id) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -462,7 +922,15 @@ async function changeActiveOrg(id) {
 
 
 
+
+
+
+
 async function loadDashboardData() {
+
+
+
+
 
 
 
@@ -470,7 +938,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         const statusRes = await fetch(`${API_BASE}/status?org_id=${activeOrgId}`);
+
+
+
+
 
 
 
@@ -478,7 +954,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -486,11 +970,23 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("cfdis-count-badge").innerText = status.cfdis_count;
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -498,11 +994,23 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         const cfdis = await cfdisRes.json();
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -510,7 +1018,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         const dashboardTbody = document.getElementById("dashboard-cfdi-tbody");
+
+
+
+
 
 
 
@@ -518,7 +1034,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -526,11 +1050,23 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         let totalEgresos = 0;
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -538,7 +1074,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             if (c.tipo === 'I') totalIngresos += c.total;
+
+
+
+
 
 
 
@@ -546,7 +1090,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             
+
+
+
+
 
 
 
@@ -554,7 +1106,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-2";
+
+
+
+
 
 
 
@@ -562,7 +1122,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-2 text-cyanNeon font-bold text-xs">${c.uuid.substring(0,8)}...</td>
+
+
+
+
 
 
 
@@ -570,7 +1138,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-2 text-slate-400 truncate max-w-[150px]">${c.emisor_nombre}</td>
+
+
+
+
 
 
 
@@ -578,7 +1154,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${c.tipo === 'I' ? 'bg-greenNeon/10 text-greenNeon' : 'bg-purpleNeon/10 text-purpleNeon'}">${c.tipo}</span></td>
+
+
+
+
 
 
 
@@ -586,7 +1170,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -594,11 +1186,23 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         });
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -606,11 +1210,23 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("stat-egresos").innerText = `$${totalEgresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -618,7 +1234,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         const taxesRes = await fetch(`${API_BASE}/taxes?org_id=${activeOrgId}`);
+
+
+
+
 
 
 
@@ -626,7 +1250,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -634,7 +1266,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -642,7 +1282,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("tax-isr-ingresos").innerText = `$${taxes.isr_ingresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+
 
 
 
@@ -650,7 +1298,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("tax-isr-base").innerText = `$${taxes.isr_base_gravable.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+
 
 
 
@@ -658,7 +1314,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("tax-isr-resico").innerText = `$${taxes.isr_provisional_resico.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+
 
 
 
@@ -666,7 +1330,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         // Update Tax Studio Tab
+
+
+
+
 
 
 
@@ -674,7 +1346,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("studio-iva-acreditable").innerText = `$${taxes.iva_acreditable.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+
 
 
 
@@ -682,7 +1362,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("studio-iva-total").innerText = `$${taxes.iva_a_pagar.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+
 
 
 
@@ -690,11 +1378,23 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         document.getElementById("studio-isr-deducciones").innerText = `$${taxes.isr_deducciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
 
 
 
+
+
+
+
         document.getElementById("studio-isr-general").innerText = `$${taxes.isr_provisional_general.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+
 
 
 
@@ -706,7 +1406,19 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
+
+
+
+
         // EFOS warning checks
+
+
+
+
 
 
 
@@ -714,7 +1426,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         cfdis.forEach(c => {
+
+
+
+
 
 
 
@@ -722,7 +1442,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -730,7 +1458,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         const efosCard = document.getElementById("efos-status-card");
+
+
+
+
 
 
 
@@ -738,7 +1474,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         if(efosAlertCount > 0) {
+
+
+
+
 
 
 
@@ -746,7 +1490,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             efosTitle.className = "text-2xl font-bold mt-2 text-rose-500";
+
+
+
+
 
 
 
@@ -754,7 +1506,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         } else {
+
+
+
+
 
 
 
@@ -762,7 +1522,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             efosTitle.className = "text-2xl font-bold mt-2 text-white";
+
+
+
+
 
 
 
@@ -770,7 +1538,19 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -782,7 +1562,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         const vaultTbody = document.getElementById("vault-tbody");
+
+
+
+
 
 
 
@@ -790,7 +1578,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         cfdis.forEach(c => {
+
+
+
+
 
 
 
@@ -798,7 +1594,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-3";
+
+
+
+
 
 
 
@@ -806,7 +1610,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-3 px-2 text-cyanNeon font-bold text-xs">${c.uuid}</td>
+
+
+
+
 
 
 
@@ -814,7 +1626,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                     <div class="font-bold">${c.emisor_rfc}</div>
+
+
+
+
 
 
 
@@ -822,7 +1642,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 </td>
+
+
+
+
 
 
 
@@ -830,7 +1658,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-3 px-2 text-xs">${c.fecha.replace("T", " ")}</td>
+
+
+
+
 
 
 
@@ -838,7 +1674,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-3 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${c.efos_status === 'Limpio' ? 'bg-greenNeon/10 text-greenNeon' : 'bg-rose-500/10 text-rose-500'}">${c.efos_status}</span></td>
+
+
+
+
 
 
 
@@ -846,7 +1690,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
                 <td class="py-3 px-2 text-right">$${c.impuestos_trasladados.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+
+
+
+
 
 
 
@@ -854,7 +1706,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -862,7 +1722,19 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         });
+
+
+
+
+
+
+
+
 
 
 
@@ -874,7 +1746,15 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
         console.error("Error loading dashboard data:", err);
+
+
+
+
 
 
 
@@ -882,7 +1762,19 @@ async function loadDashboardData() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -894,7 +1786,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -902,11 +1802,23 @@ async function loadPolizas() {
 
 
 
+
+
+
+
         const polizas = await res.json();
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -914,7 +1826,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
         listContainer.innerHTML = "";
+
+
+
+
 
 
 
@@ -922,7 +1842,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
         polizas.forEach(p => {
+
+
+
+
 
 
 
@@ -930,7 +1858,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
             card.className = "border border-slate-800 p-4 rounded-xl bg-slate-900/40 cursor-pointer hover:border-cyanNeon/40 transition";
+
+
+
+
 
 
 
@@ -938,7 +1874,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
             
+
+
+
+
 
 
 
@@ -946,7 +1890,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
             p.cargos_abonos.forEach(item => {
+
+
+
+
 
 
 
@@ -954,7 +1906,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                     <div class="flex justify-between text-xs font-mono py-0.5 border-b border-slate-950/40">
+
+
+
+
 
 
 
@@ -962,7 +1922,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                         <span class="text-white">
+
+
+
+
 
 
 
@@ -970,7 +1938,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                         </span>
+
+
+
+
 
 
 
@@ -978,7 +1954,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                 `;
+
+
+
+
 
 
 
@@ -986,7 +1970,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
             
+
+
+
+
 
 
 
@@ -994,7 +1986,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                 <div class="flex justify-between items-center mb-2">
+
+
+
+
 
 
 
@@ -1002,7 +2002,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                     <span class="text-xs text-slate-500">${p.fecha}</span>
+
+
+
+
 
 
 
@@ -1010,7 +2018,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
                 <h5 class="text-sm font-semibold mb-2 text-white">${p.concepto}</h5>
+
+
+
+
 
 
 
@@ -1018,7 +2034,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -1026,7 +2050,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -1034,7 +2066,15 @@ async function loadPolizas() {
 
 
 
+
+
+
+
         console.error(e);
+
+
+
+
 
 
 
@@ -1042,7 +2082,19 @@ async function loadPolizas() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1054,7 +2106,15 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
     if(!uuid) return;
+
+
+
+
 
 
 
@@ -1062,7 +2122,15 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
         const res = await fetch(`${API_BASE}/cfdis?org_id=${activeOrgId}`);
+
+
+
+
 
 
 
@@ -1070,7 +2138,15 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
         const cfdi = cfdis.find(c => c.uuid === uuid);
+
+
+
+
 
 
 
@@ -1078,7 +2154,15 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
             document.getElementById("policy-xml-viewer").innerText = cfdi.xml_content;
+
+
+
+
 
 
 
@@ -1086,7 +2170,15 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
             document.getElementById("policy-xml-viewer").innerText = "No se localizó el XML original.";
+
+
+
+
 
 
 
@@ -1094,7 +2186,15 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
     } catch(e) {
+
+
+
+
 
 
 
@@ -1102,11 +2202,27 @@ async function viewPolicyXML(uuid) {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1118,7 +2234,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -1126,7 +2250,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
         const data = await res.json();
+
+
+
+
 
 
 
@@ -1134,7 +2266,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
         tbody.innerHTML = "";
+
+
+
+
 
 
 
@@ -1142,7 +2282,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
         data.forEach(e => {
+
+
+
+
 
 
 
@@ -1150,7 +2298,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
             tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-3";
+
+
+
+
 
 
 
@@ -1158,7 +2314,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
                 <td class="py-3 px-2 text-rose-500 font-bold">${e.rfc}</td>
+
+
+
+
 
 
 
@@ -1166,7 +2330,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
                 <td class="py-3 px-2 font-bold">${e.situacion}</td>
+
+
+
+
 
 
 
@@ -1174,7 +2346,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -1182,7 +2362,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -1190,7 +2378,15 @@ async function loadEFOS() {
 
 
 
+
+
+
+
         console.error(e);
+
+
+
+
 
 
 
@@ -1198,7 +2394,19 @@ async function loadEFOS() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1210,7 +2418,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -1218,11 +2434,23 @@ async function loadEmployees() {
 
 
 
+
+
+
+
         const list = await res.json();
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1230,7 +2458,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
         container.innerHTML = "";
+
+
+
+
 
 
 
@@ -1238,7 +2474,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
         list.forEach(e => {
+
+
+
+
 
 
 
@@ -1246,7 +2490,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
             btn.className = "w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-900/40 hover:border-cyanNeon transition flex justify-between items-center";
+
+
+
+
 
 
 
@@ -1254,7 +2506,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
             
+
+
+
+
 
 
 
@@ -1262,7 +2522,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
                 <div>
+
+
+
+
 
 
 
@@ -1270,11 +2538,23 @@ async function loadEmployees() {
 
 
 
+
+
+
+
                     <p class="text-xs text-slate-400 font-mono">${e.rfc}</p>
 
 
 
+
+
+
+
                 </div>
+
+
+
+
 
 
 
@@ -1282,7 +2562,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
                     <span class="text-xs text-cyanNeon font-bold font-mono">$${e.salario_diario.toFixed(2)}/d</span>
+
+
+
+
 
 
 
@@ -1290,7 +2578,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -1298,7 +2594,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -1306,7 +2610,15 @@ async function loadEmployees() {
 
 
 
+
+
+
+
         console.error(e);
+
+
+
+
 
 
 
@@ -1314,7 +2626,19 @@ async function loadEmployees() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1326,7 +2650,15 @@ function selectEmployee(emp) {
 
 
 
+
+
+
+
     selectedEmployee = emp;
+
+
+
+
 
 
 
@@ -1334,7 +2666,15 @@ function selectEmployee(emp) {
 
 
 
+
+
+
+
     document.getElementById("calculator-ui").classList.remove("hidden");
+
+
+
+
 
 
 
@@ -1342,7 +2682,15 @@ function selectEmployee(emp) {
 
 
 
+
+
+
+
     document.getElementById("calc-emp-name").value = emp.nombre;
+
+
+
+
 
 
 
@@ -1350,11 +2698,27 @@ function selectEmployee(emp) {
 
 
 
+
+
+
+
     document.getElementById("payroll-results").classList.add("hidden");
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1366,11 +2730,23 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     if(!selectedEmployee) return;
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1378,7 +2754,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     const tipoBaja = document.getElementById("calc-tipo-baja").value;
+
+
+
+
 
 
 
@@ -1386,7 +2770,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1394,7 +2786,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         empleado_id: selectedEmployee.id,
+
+
+
+
 
 
 
@@ -1402,7 +2802,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -1410,7 +2818,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         bodyData.tipo_baja = tipoBaja;
+
+
+
+
 
 
 
@@ -1418,7 +2834,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -1426,7 +2850,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -1434,7 +2866,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -1442,7 +2882,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             body: JSON.stringify(bodyData)
+
+
+
+
 
 
 
@@ -1450,7 +2898,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1458,7 +2914,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             const err = await res.json();
+
+
+
+
 
 
 
@@ -1466,7 +2930,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             return;
+
+
+
+
 
 
 
@@ -1474,7 +2946,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1482,7 +2962,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1490,7 +2978,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         document.getElementById("payroll-results").classList.remove("hidden");
+
+
+
+
 
 
 
@@ -1498,11 +2994,23 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         breakdown.innerHTML = "";
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1510,7 +3018,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1518,7 +3034,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             breakdown.innerHTML = `
+
+
+
+
 
 
 
@@ -1526,7 +3050,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 <div class="flex justify-between text-rose-400"><span>(-) Retención ISR:</span><span>$${deg.isr_retenido.toFixed(2)}</span></div>
+
+
+
+
 
 
 
@@ -1534,7 +3066,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 <div class="flex justify-between text-rose-400"><span>(-) Ahorro Obrero:</span><span>$${deg.fondo_ahorro_obrero.toFixed(2)}</span></div>
+
+
+
+
 
 
 
@@ -1542,7 +3082,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 <div class="border-t border-slate-800 my-2"></div>
+
+
+
+
 
 
 
@@ -1550,7 +3098,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -1558,7 +3114,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             breakdown.innerHTML = `
+
+
+
+
 
 
 
@@ -1566,7 +3130,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 <div class="flex justify-between"><span>Proporcional Aguinaldo:</span><span class="text-white">$${deg.aguinaldo.toFixed(2)}</span></div>
+
+
+
+
 
 
 
@@ -1574,7 +3146,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 <div class="flex justify-between"><span>Prima Vacacional:</span><span class="text-white">$${deg.prima_vacacional.toFixed(2)}</span></div>
+
+
+
+
 
 
 
@@ -1582,7 +3162,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 ${deg.indemnizacion_20 > 0 ? `<div class="flex justify-between text-amberNeon"><span>Indemnización (20 días/año):</span><span>$${deg.indemnizacion_20.toFixed(2)}</span></div>` : ''}
+
+
+
+
 
 
 
@@ -1590,7 +3178,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
                 <div class="border-t border-slate-800 my-2"></div>
+
+
+
+
 
 
 
@@ -1598,7 +3194,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
             `;
+
+
+
+
 
 
 
@@ -1606,7 +3210,15 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -1614,11 +3226,27 @@ async function runPayrollCalculation() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1630,11 +3258,23 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
     if (input.files.length === 0) return;
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1642,7 +3282,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
     const formData = new FormData();
+
+
+
+
 
 
 
@@ -1650,7 +3298,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
     formData.append("org_id", activeOrgId);
+
+
+
+
 
 
 
@@ -1658,7 +3314,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -1666,7 +3330,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -1674,7 +3346,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -1682,7 +3362,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -1690,7 +3378,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
             alert(`CFDI cargado exitosamente. UUID: ${data.uuid}. Riesgo SAT: ${data.efos_status}`);
+
+
+
+
 
 
 
@@ -1698,7 +3394,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
             loadPolizas();
+
+
+
+
 
 
 
@@ -1706,7 +3410,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
             alert("Error al cargar comprobante.");
+
+
+
+
 
 
 
@@ -1714,7 +3426,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -1722,7 +3442,15 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
         alert("Error de red al procesar el archivo.");
+
+
+
+
 
 
 
@@ -1730,7 +3458,19 @@ async function uploadXMLFile(input) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1742,7 +3482,15 @@ function triggerSATSync() {
 
 
 
+
+
+
+
     const spinner = document.getElementById("sync-spinner");
+
+
+
+
 
 
 
@@ -1750,7 +3498,15 @@ function triggerSATSync() {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1758,7 +3514,15 @@ function triggerSATSync() {
 
 
 
+
+
+
+
         spinner.classList.add("hidden");
+
+
+
+
 
 
 
@@ -1766,7 +3530,15 @@ function triggerSATSync() {
 
 
 
+
+
+
+
         loadDashboardData();
+
+
+
+
 
 
 
@@ -1774,11 +3546,27 @@ function triggerSATSync() {
 
 
 
+
+
+
+
     }, 2000);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1790,11 +3578,27 @@ function downloadDIOT() {
 
 
 
+
+
+
+
     alert("Archivo DIOT batch generado (.txt con delimitador pipe | listo para carga Batch SAT).");
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1806,11 +3610,27 @@ function exportAnexo24(type) {
 
 
 
+
+
+
+
     alert(`Generando y descargando XML del Anexo 24: ${type === 'catalogo' ? 'Catálogo de Cuentas' : 'Balanza de Comprobación'}.`);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1822,7 +3642,15 @@ function toggleAIChat() {
 
 
 
+
+
+
+
     const widget = document.getElementById("ai-chat-widget");
+
+
+
+
 
 
 
@@ -1830,7 +3658,19 @@ function toggleAIChat() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1842,7 +3682,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
     const input = document.getElementById("ai-input");
+
+
+
+
 
 
 
@@ -1850,11 +3698,23 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
     if(!query) return;
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -1862,7 +3722,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
     input.value = "";
+
+
+
+
 
 
 
@@ -1870,7 +3738,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -1878,7 +3754,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -1886,7 +3770,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
             body: JSON.stringify({ message: query })
+
+
+
+
 
 
 
@@ -1894,7 +3786,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
         const data = await res.json();
+
+
+
+
 
 
 
@@ -1902,7 +3802,15 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -1910,11 +3818,27 @@ async function sendAIChatMessage() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1926,7 +3850,15 @@ function appendChatMessage(sender, text, colorClass) {
 
 
 
+
+
+
+
     const msgBox = document.getElementById("ai-messages");
+
+
+
+
 
 
 
@@ -1934,7 +3866,15 @@ function appendChatMessage(sender, text, colorClass) {
 
 
 
+
+
+
+
     msg.className = "bg-slate-900 border border-slate-800 p-2.5 rounded-lg";
+
+
+
+
 
 
 
@@ -1942,7 +3882,15 @@ function appendChatMessage(sender, text, colorClass) {
 
 
 
+
+
+
+
         <p class="${colorClass} font-bold mb-1">${sender}:</p>
+
+
+
+
 
 
 
@@ -1950,7 +3898,15 @@ function appendChatMessage(sender, text, colorClass) {
 
 
 
+
+
+
+
     `;
+
+
+
+
 
 
 
@@ -1958,11 +3914,27 @@ function appendChatMessage(sender, text, colorClass) {
 
 
 
+
+
+
+
     msgBox.scrollTop = msgBox.scrollHeight;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1974,7 +3946,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+
+
+
 
 
 
@@ -1982,7 +3962,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
         ? "127.0.0.1:8020" 
+
+
+
+
 
 
 
@@ -1990,7 +3978,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
     const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/sync`);
+
+
+
+
 
 
 
@@ -1998,7 +3994,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
     ws.onmessage = (event) => {
+
+
+
+
 
 
 
@@ -2006,7 +4010,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
         if(data.event === "cfdi_uploaded") {
+
+
+
+
 
 
 
@@ -2014,7 +4026,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
             loadDashboardData();
+
+
+
+
 
 
 
@@ -2022,7 +4042,15 @@ function setupWebSocket() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -2030,11 +4058,23 @@ function setupWebSocket() {
 
 
 
+
+
+
+
         setTimeout(setupWebSocket, 5000);
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -2046,7 +4086,19 @@ function setupWebSocket() {
 
 
 
+
+
+
+
+
+
+
+
 window.addEventListener("DOMContentLoaded", () => {
+
+
+
+
 
 
 
@@ -2054,7 +4106,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
     loadEFOS();
+
+
+
+
 
 
 
@@ -2062,7 +4122,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -2074,7 +4146,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
 function openAddOrgModal() {
+
+
+
+
 
 
 
@@ -2082,7 +4162,19 @@ function openAddOrgModal() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2094,7 +4186,15 @@ function closeAddOrgModal() {
 
 
 
+
+
+
+
     document.getElementById("add-org-modal").classList.add("hidden");
+
+
+
+
 
 
 
@@ -2102,7 +4202,15 @@ function closeAddOrgModal() {
 
 
 
+
+
+
+
     document.getElementById("new-org-name").value = "";
+
+
+
+
 
 
 
@@ -2110,7 +4218,19 @@ function closeAddOrgModal() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2122,7 +4242,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
     const rfc = document.getElementById("new-org-rfc").value.trim();
+
+
+
+
 
 
 
@@ -2130,11 +4258,23 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
     const ciec = document.getElementById("new-org-ciec").value.trim();
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2142,7 +4282,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
         alert("RFC y Razón Social son requeridos.");
+
+
+
+
 
 
 
@@ -2150,7 +4298,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -2158,7 +4314,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -2166,7 +4330,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -2174,7 +4346,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
             body: JSON.stringify({ rfc, razon_social: name, ciec })
+
+
+
+
 
 
 
@@ -2182,7 +4362,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
         const data = await res.json();
+
+
+
+
 
 
 
@@ -2190,7 +4378,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
         if (data.status === 'success') {
+
+
+
+
 
 
 
@@ -2198,7 +4394,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
             closeAddOrgModal();
+
+
+
+
 
 
 
@@ -2206,7 +4410,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
             await loadOrganizations();
+
+
+
+
 
 
 
@@ -2214,7 +4426,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
             alert(`Error al registrar empresa: ${data.detail}`);
+
+
+
+
 
 
 
@@ -2222,7 +4442,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
     } catch(e) {
+
+
+
+
 
 
 
@@ -2230,7 +4458,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
         alert("Error de red al agregar empresa.");
+
+
+
+
 
 
 
@@ -2238,7 +4474,19 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2250,7 +4498,15 @@ async function submitNewOrganization() {
 
 
 
+
+
+
+
 function openAuthModal() {
+
+
+
+
 
 
 
@@ -2258,11 +4514,27 @@ function openAuthModal() {
 
 
 
+
+
+
+
     toggleAuthTab('signup');
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2274,7 +4546,15 @@ function closeAuthModal() {
 
 
 
+
+
+
+
     document.getElementById("auth-modal").classList.add("hidden");
+
+
+
+
 
 
 
@@ -2282,7 +4562,15 @@ function closeAuthModal() {
 
 
 
+
+
+
+
     document.getElementById("signup-username").value = "";
+
+
+
+
 
 
 
@@ -2290,7 +4578,15 @@ function closeAuthModal() {
 
 
 
+
+
+
+
     document.getElementById("signup-password").value = "";
+
+
+
+
 
 
 
@@ -2298,7 +4594,15 @@ function closeAuthModal() {
 
 
 
+
+
+
+
     document.getElementById("signup-name").value = "";
+
+
+
+
 
 
 
@@ -2306,11 +4610,27 @@ function closeAuthModal() {
 
 
 
+
+
+
+
     document.getElementById("login-password").value = "";
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2322,7 +4642,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
     const signupBtn = document.getElementById("auth-tab-signup");
+
+
+
+
 
 
 
@@ -2330,7 +4658,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
     const signupForm = document.getElementById("auth-form-signup");
+
+
+
+
 
 
 
@@ -2338,7 +4674,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2346,7 +4690,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
         signupBtn.className = "flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold";
+
+
+
+
 
 
 
@@ -2354,7 +4706,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
         signupForm.classList.remove("hidden");
+
+
+
+
 
 
 
@@ -2362,7 +4722,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
         document.getElementById("auth-title").innerText = "Crear Cuenta (Sign Up)";
+
+
+
+
 
 
 
@@ -2370,7 +4738,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
         loginBtn.className = "flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold";
+
+
+
+
 
 
 
@@ -2378,7 +4754,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
         loginForm.classList.remove("hidden");
+
+
+
+
 
 
 
@@ -2386,7 +4770,15 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
         document.getElementById("auth-title").innerText = "Iniciar Sesión (Login)";
+
+
+
+
 
 
 
@@ -2394,7 +4786,19 @@ function toggleAuthTab(tab) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2406,7 +4810,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
     const username = document.getElementById("signup-username").value.trim();
+
+
+
+
 
 
 
@@ -2414,7 +4826,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
     const password = document.getElementById("signup-password").value.trim();
+
+
+
+
 
 
 
@@ -2422,11 +4842,23 @@ async function submitSignup() {
 
 
 
+
+
+
+
     const name = document.getElementById("signup-name").value.trim();
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2434,7 +4866,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
         alert("Todos los campos son obligatorios para el registro.");
+
+
+
+
 
 
 
@@ -2442,7 +4882,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -2450,7 +4898,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -2458,7 +4914,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -2466,7 +4930,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
             body: JSON.stringify({ username, email, password, rfc, razon_social: name })
+
+
+
+
 
 
 
@@ -2474,7 +4946,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
         const data = await res.json();
+
+
+
+
 
 
 
@@ -2482,7 +4962,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
         if (data.status === 'success') {
+
+
+
+
 
 
 
@@ -2490,7 +4978,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
             closeAuthModal();
+
+
+
+
 
 
 
@@ -2498,7 +4994,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
             activeUserId = data.user_id;
+
+
+
+
 
 
 
@@ -2506,7 +5010,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
             await loadOrganizations();
+
+
+
+
 
 
 
@@ -2514,7 +5026,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
             alert(`Error al registrarse: ${data.detail}`);
+
+
+
+
 
 
 
@@ -2522,7 +5042,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
     } catch(e) {
+
+
+
+
 
 
 
@@ -2530,7 +5058,15 @@ async function submitSignup() {
 
 
 
+
+
+
+
         alert("Error de red durante el registro.");
+
+
+
+
 
 
 
@@ -2538,7 +5074,19 @@ async function submitSignup() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2550,7 +5098,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
     const username = document.getElementById("login-username").value.trim();
+
+
+
+
 
 
 
@@ -2558,7 +5114,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
     
+
+
+
+
 
 
 
@@ -2566,7 +5130,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         alert("Ingresa usuario y contraseña.");
+
+
+
+
 
 
 
@@ -2574,7 +5146,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -2582,7 +5162,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -2590,7 +5178,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
             method: "POST",
+
+
+
+
 
 
 
@@ -2598,7 +5194,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
             body: JSON.stringify({ username, password })
+
+
+
+
 
 
 
@@ -2606,7 +5210,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2614,7 +5226,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
             alert("Credenciales incorrectas.");
+
+
+
+
 
 
 
@@ -2622,11 +5242,23 @@ async function submitLogin() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2634,7 +5266,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         alert(`¡Bienvenido de nuevo, ${data.user.username}!`);
+
+
+
+
 
 
 
@@ -2642,7 +5282,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2650,7 +5298,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         activeUserId = data.user.id;
+
+
+
+
 
 
 
@@ -2658,7 +5314,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
             activeOrgId = data.organizations[0].id;
+
+
+
+
 
 
 
@@ -2666,7 +5330,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         await loadOrganizations();
+
+
+
+
 
 
 
@@ -2674,7 +5346,15 @@ async function submitLogin() {
 
 
 
+
+
+
+
         console.error(e);
+
+
+
+
 
 
 
@@ -2682,11 +5362,27 @@ async function submitLogin() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2698,7 +5394,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -2706,7 +5410,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
         if (!res.ok) return;
+
+
+
+
 
 
 
@@ -2714,7 +5426,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2722,7 +5442,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
         const upgradeBtn = document.getElementById("acc-upgrade-btn");
+
+
+
+
 
 
 
@@ -2730,7 +5458,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
         
+
+
+
+
 
 
 
@@ -2738,7 +5474,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
             let remainingDays = 30;
+
+
+
+
 
 
 
@@ -2746,7 +5490,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
                 const formattedDate = user.expires_at.replace(" ", "T");
+
+
+
+
 
 
 
@@ -2754,7 +5506,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
                 const diffTime = expiry - new Date();
+
+
+
+
 
 
 
@@ -2762,7 +5522,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -2770,7 +5538,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
             planTypeSpan.className = "text-cyanNeon font-bold";
+
+
+
+
 
 
 
@@ -2778,7 +5554,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
             card.className = "mb-6 p-3 bg-cyanNeon/5 border border-cyanNeon/20 rounded-xl space-y-1 font-mono text-[10px]";
+
+
+
+
 
 
 
@@ -2786,7 +5570,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
             planTypeSpan.innerText = "DEMO GRATIS";
+
+
+
+
 
 
 
@@ -2794,7 +5586,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
             upgradeBtn.classList.remove("hidden");
+
+
+
+
 
 
 
@@ -2802,7 +5602,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -2810,7 +5618,15 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
         console.error("Error loading accountant status:", e);
+
+
+
+
 
 
 
@@ -2818,7 +5634,19 @@ async function loadAccountantStatus() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2830,7 +5658,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -2838,7 +5674,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
             method: "POST"
+
+
+
+
 
 
 
@@ -2846,7 +5690,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
         const data = await res.json();
+
+
+
+
 
 
 
@@ -2854,7 +5706,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
             alert("¡Suscripción de Despacho PRO activada por $199/mes! Gracias por tu confianza.");
+
+
+
+
 
 
 
@@ -2862,7 +5722,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
         } else {
+
+
+
+
 
 
 
@@ -2870,7 +5738,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -2878,7 +5754,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
         console.error(e);
+
+
+
+
 
 
 
@@ -2886,11 +5770,27 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2902,7 +5802,15 @@ async function triggerAccountantUpgrade() {
 
 
 
+
+
+
+
 function toggleTheme() {
+
+
+
+
 
 
 
@@ -2910,7 +5818,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
     const themeIcon = document.getElementById("theme-icon");
+
+
+
+
 
 
 
@@ -2918,7 +5834,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
     if (body.classList.contains("light-theme")) {
+
+
+
+
 
 
 
@@ -2926,7 +5850,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
         localStorage.setItem("theme", "dark");
+
+
+
+
 
 
 
@@ -2934,7 +5866,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
         themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
+
+
+
+
 
 
 
@@ -2942,7 +5882,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
         body.classList.add("light-theme");
+
+
+
+
 
 
 
@@ -2950,7 +5898,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
         // Set Sun Icon
+
+
+
+
 
 
 
@@ -2958,11 +5914,27 @@ function toggleTheme() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2974,7 +5946,15 @@ function toggleTheme() {
 
 
 
+
+
+
+
 window.addEventListener("DOMContentLoaded", () => {
+
+
+
+
 
 
 
@@ -2982,7 +5962,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
     const themeIcon = document.getElementById("theme-icon");
+
+
+
+
 
 
 
@@ -2990,7 +5978,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
         document.body.classList.add("light-theme");
+
+
+
+
 
 
 
@@ -2998,7 +5994,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3007,47 +6011,96 @@ window.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
+
 // Add Employee Modal Helpers
+
 function openAddEmployeeModal() {
+
     document.getElementById("add-employee-modal").classList.remove("hidden");
+
 }
+
+
 
 function closeAddEmployeeModal() {
+
     document.getElementById("add-employee-modal").classList.add("hidden");
+
     document.getElementById("emp-new-name").value = "";
+
     document.getElementById("emp-new-rfc").value = "";
+
     document.getElementById("emp-new-salary").value = "";
+
 }
+
+
 
 async function submitNewEmployee() {
+
     const nombre = document.getElementById("emp-new-name").value.trim();
+
     const rfc = document.getElementById("emp-new-rfc").value.trim();
+
     const salary = parseFloat(document.getElementById("emp-new-salary").value);
 
+
+
     if (!nombre || !rfc || isNaN(salary)) {
+
         alert("Por favor llena todos los campos correctamente.");
+
         return;
+
     }
 
+
+
     try {
+
         const res = await fetch(`${API_BASE}/employees?org_id=${activeOrgId}`, {
+
             method: "POST",
+
             headers: { "Content-Type": "application/json" },
+
             body: JSON.stringify({
+
                 nombre: nombre,
+
                 rfc: rfc,
+
                 salario_diario: salary
+
             })
+
         });
+
         const data = await res.json();
+
         if (data.status === 'success') {
+
             closeAddEmployeeModal();
+
             await loadEmployees();
+
         } else {
+
             alert("Error al registrar el empleado.");
+
         }
+
     } catch(e) {
+
         console.error(e);
+
         alert("Error de red al registrar el empleado.");
+
     }
+
 }
+
