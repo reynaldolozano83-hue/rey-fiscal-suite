@@ -498,7 +498,11 @@ function appendChatMessage(sender, text, colorClass) {
 }
 
 function setupWebSocket() {
-    const ws = new WebSocket("ws://127.0.0.1:8020/ws/sync");
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host.includes("localhost") || window.location.host.includes("127.0.0.1") 
+        ? "127.0.0.1:8020" 
+        : window.location.host;
+    const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/sync`);
     ws.onopen = () => console.log("WebSocket connected.");
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
