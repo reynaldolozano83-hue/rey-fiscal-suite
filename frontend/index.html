@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rey Fiscal - Enterprise Suite & ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090d16',
+                        glassBg: 'rgba(15, 23, 42, 0.45)',
+                        borderGlow: 'rgba(0, 240, 255, 0.15)',
+                        cyanNeon: '#00f0ff',
+                        purpleNeon: '#7000ff',
+                        greenNeon: '#39ff14',
+                        amberNeon: '#ffb700',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-darkBg text-slate-100 font-sans min-h-screen flex flex-col selection:bg-cyanNeon/30 selection:text-white">
+    <div class="fixed inset-0 pointer-events-none z-0 opacity-20 bg-[linear-gradient(rgba(18,24,38,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(18,24,38,0.1)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+    <div class="fixed top-[-20%] left-[-20%] w-[60%] h-[60%] rounded-full bg-purpleNeon/10 blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-20%] right-[-20%] w-[60%] h-[60%] rounded-full bg-cyanNeon/10 blur-[120px] pointer-events-none z-0"></div>
+
+    <div class="flex-grow flex flex-col md:flex-row z-10">
+        <aside class="w-full md:w-64 bg-slate-950/80 border-b md:border-b-0 md:border-r border-slate-800/60 p-5 flex flex-col justify-between backdrop-blur-md">
+            <div>
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purpleNeon to-cyanNeon flex items-center justify-center font-bold text-lg shadow-lg shadow-cyanNeon/20">RF</div>
+                    <div>
+                        <h1 class="font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">REY FISCAL</h1>
+                        <p class="text-[10px] tracking-widest text-cyanNeon font-mono uppercase">ERP SUITE & ANEXO 24</p>
+                    </div>
+                </div>
+
+                <!-- User profile session summary -->
+                <div class="mb-4 p-3 bg-slate-900/60 border border-slate-800/80 rounded-xl flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-mono uppercase">Contador Maestro</p>
+                        <h5 class="text-xs font-bold text-white" id="nav-username">Admin Demo</h5>
+                    </div>
+                    <button onclick="openAuthModal()" class="text-slate-400 hover:text-cyanNeon transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                    </button>
+                </div>
+                
+                <!-- Accountant Subscription Card -->
+                <div id="accountant-sub-card" class="mb-6 p-3 bg-gradient-to-r from-purpleNeon/10 to-cyanNeon/10 border border-purpleNeon/30 rounded-xl space-y-2 font-mono text-[10px]">
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>PLAN DESPACHO:</span>
+                        <span id="acc-plan-type" class="text-purpleNeon font-bold">PRUEBA 30D</span>
+                    </div>
+                    <button id="acc-upgrade-btn" onclick="triggerAccountantUpgrade()" class="w-full py-1 bg-purpleNeon hover:bg-purpleNeon/85 text-white font-sans font-bold rounded transition">
+                        Suscribirse - $199/mes
+                    </button>
+                </div>
+                <nav class="space-y-2">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/></svg>
+                        <span>Command Center</span>
+                    </button>
+                    <button onclick="switchTab('xml-vault')" id="btn-xml-vault" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v12m0 0l-4-4m4 4l4-4m0 6V4"/></svg>
+                        <span>XML Vault</span>
+                    </button>
+                    <button onclick="switchTab('policy-builder')" id="btn-policy-builder" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        <span>Policy Builder</span>
+                    </button>
+                    <button onclick="switchTab('tax-studio')" id="btn-tax-studio" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Tax Studio</span>
+                    </button>
+                    <button onclick="switchTab('payroll-hr')" id="btn-payroll-hr" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>Payroll & LFT</span>
+                    </button>
+                    <button onclick="switchTab('efos-center')" id="btn-efos-center" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span>EFOS List (Art 69-B)</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="mt-auto border-t border-slate-800/80 pt-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-greenNeon" id="org-status-indicator"></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-mono">Plan: <span id="org-plan-badge" class="text-cyanNeon">FREE</span></p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-grow flex flex-col p-6 overflow-y-auto">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <h2 id="view-title" class="text-2xl font-bold tracking-tight text-white">Command Center</h2>
+                    <p id="view-subtitle" class="text-slate-400 text-sm">Resumen fiscal de facturas y obligaciones del periodo.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1">
+                        <span class="text-xs text-slate-500 font-mono uppercase">RFC:</span>
+                        <select id="org-switcher" onchange="changeActiveOrganization(this.value)" class="bg-transparent border-0 text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                        </select>
+                    </div>
+                    <button onclick="openAddOrgModal()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                        <span>+ Empresa</span>
+                    </button>
+                    <button onclick="triggerSATSync()" class="px-4 py-2 bg-gradient-to-r from-cyanNeon/20 to-purpleNeon/20 border border-cyanNeon/30 hover:border-cyanNeon text-cyanNeon rounded-lg text-sm transition font-semibold flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin hidden" id="sync-spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.27 15H18"/></svg>
+                        <span>Sincronizar SAT (CIEC)</span>
+                    </button>
+                    <button onclick="toggleTheme()" class="p-2 bg-slate-900/60 border border-slate-800 text-slate-400 rounded-xl hover:text-white transition flex items-center justify-center" title="Cambiar Tema">
+                        <svg id="theme-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                    <label class="px-4 py-2 bg-purpleNeon text-white rounded-lg text-sm font-semibold hover:bg-purpleNeon/80 transition cursor-pointer flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span>Cargar XML</span>
+                        <input type="file" id="xml-upload-input" class="hidden" accept=".xml" onchange="uploadXMLFile(this)">
+                    </label>
+                </div>
+            </header>
+
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <div class="glass-card p-5 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 text-purpleNeon opacity-20">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Ingresos Facturados</p>
+                        <h3 class="text-2xl font-bold mt-2 text-white" id="stat-ingresos">$0.00</h3>
+                        <p class="text-[10px] text-greenNeon mt-1 font-mono">↑ 100% cobrado via PUE</p>
+                    </div>
+                    <div class="glass-card p-5 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 text-cyanNeon opacity-20">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Egresos / Gastos</p>
+                        <h3 class="text-2xl font-bold mt-2 text-white" id="stat-egresos">$0.00</h3>
+                        <p class="text-[10px] text-slate-500 mt-1 font-mono">Deducibles del periodo</p>
+                    </div>
+                    <div class="glass-card p-5 relative overflow-hidden">
+                        <div class="absolute right-4 top-4 text-greenNeon opacity-20">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">IVA por Enterar</p>
+                        <h3 class="text-2xl font-bold mt-2 text-greenNeon" id="stat-iva">$0.00</h3>
+                        <p class="text-[10px] text-slate-400 mt-1 font-mono">Flujo de Efectivo Real</p>
+                    </div>
+                    <div class="glass-card p-5 relative overflow-hidden" id="efos-status-card">
+                        <div class="absolute right-4 top-4 text-amberNeon opacity-20">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Riesgo EFOS (69-B)</p>
+                        <h3 class="text-2xl font-bold mt-2 text-white" id="stat-efos-alerts">Sin Alertas</h3>
+                        <p class="text-[10px] text-slate-400 mt-1 font-mono">Proveedores revisados hoy</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-5 col-span-2 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-cyanNeon shadow-lg shadow-cyanNeon/40"></span>
+                                Flujo SAT de Facturas Recientes
+                            </h4>
+                            <span class="text-xs text-slate-400">Total XMLs: <span id="cfdis-count-badge" class="font-mono text-cyanNeon">0</span></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-300 font-mono">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-400 text-xs">
+                                        <th class="py-2">UUID</th>
+                                        <th class="py-2">RFC Emisor</th>
+                                        <th class="py-2">Nombre</th>
+                                        <th class="py-2">Fecha</th>
+                                        <th class="py-2">Tipo</th>
+                                        <th class="py-2 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboard-cfdi-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-5 space-y-4">
+                        <h4 class="font-bold text-lg text-slate-100">Cálculo Provisional ISR</h4>
+                        <div class="space-y-4 font-mono text-sm">
+                            <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800">
+                                <span class="text-slate-400">Ingresos Acumulables:</span>
+                                <span class="text-white font-semibold" id="tax-isr-ingresos">$0.00</span>
+                            </div>
+                            <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800">
+                                <span class="text-slate-400">Deducciones Autorizadas:</span>
+                                <span class="text-white font-semibold" id="tax-isr-deducciones">$0.00</span>
+                            </div>
+                            <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800">
+                                <span class="text-slate-400">Base Gravable:</span>
+                                <span class="text-white font-semibold" id="tax-isr-base">$0.00</span>
+                            </div>
+                            <div class="border-t border-slate-800 my-2"></div>
+                            <div class="flex justify-between p-2 bg-purpleNeon/10 rounded border border-purpleNeon/25">
+                                <span class="text-purpleNeon">ISR Régimen General (30%):</span>
+                                <span class="text-purpleNeon font-bold" id="tax-isr-rg">$0.00</span>
+                            </div>
+                            <div class="flex justify-between p-2 bg-cyanNeon/10 rounded border border-cyanNeon/25">
+                                <span class="text-cyanNeon">ISR RESICO PF (2%):</span>
+                                <span class="text-cyanNeon font-bold" id="tax-isr-resico">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-xml-vault" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Bóveda Digital XML CFDI</h3>
+                        <button onclick="downloadDIOT()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 text-sm font-semibold transition font-mono">
+                            Exportar DIOT Batch (.txt)
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300 font-mono">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-slate-400 text-xs">
+                                    <th class="py-3 px-2">UUID</th>
+                                    <th class="py-3 px-2">Emisor RFC / Nombre</th>
+                                    <th class="py-3 px-2">Receptor RFC</th>
+                                    <th class="py-3 px-2">Fecha</th>
+                                    <th class="py-3 px-2">Metodo</th>
+                                    <th class="py-3 px-2">EFOS</th>
+                                    <th class="py-3 px-2 text-right">Subtotal</th>
+                                    <th class="py-3 px-2 text-right">IVA 16%</th>
+                                    <th class="py-3 px-2 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vault-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-policy-builder" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-6 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Visor XML Fiscal</h3>
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs h-[400px] overflow-y-auto text-slate-300" id="policy-xml-viewer">
+                            Selecciona una póliza generada para previsualizar el XML correspondiente.
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card p-6 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">Pólizas Diario e Ingresos (Anexo 24)</h3>
+                        </div>
+                        <div class="space-y-4 h-[350px] overflow-y-auto" id="policy-list"></div>
+                    </div>
+                    <div class="border-t border-slate-800 pt-4 flex justify-between">
+                        <button onclick="exportAnexo24('catalogo')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 font-mono text-xs">
+                            Descargar Catálogo (XML)
+                        </button>
+                        <button onclick="exportAnexo24('balanza')" class="px-4 py-2 bg-cyanNeon text-black rounded font-mono text-xs font-semibold">
+                            Descargar Balanza (XML)
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-tax-studio" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6 space-y-6">
+                    <h3 class="text-xl font-bold">Estudio Impositivo Real-Time (IVA & ISR)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border border-slate-800 p-5 rounded-xl bg-slate-950/40 space-y-4 font-mono">
+                            <h4 class="font-bold text-cyanNeon">Determinación de IVA</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between text-slate-400">
+                                    <span>IVA Trasladado (Cobrado PUE):</span>
+                                    <span class="text-white" id="studio-iva-cobrado">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-400">
+                                    <span>IVA Acreditable (Pagado PUE):</span>
+                                    <span class="text-white" id="studio-iva-acreditable">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-400">
+                                    <span>(-) Retenciones IVA:</span>
+                                    <span class="text-white" id="studio-iva-retenciones">$0.00</span>
+                                </div>
+                                <div class="border-t border-slate-800 my-2"></div>
+                                <div class="flex justify-between font-bold text-lg">
+                                    <span class="text-slate-300">IVA a Pagar / Saldo a Favor:</span>
+                                    <span class="text-greenNeon" id="studio-iva-total">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border border-slate-800 p-5 rounded-xl bg-slate-950/40 space-y-4 font-mono">
+                            <h4 class="font-bold text-purpleNeon">Proyección de Pagos Provisionales ISR</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Base de Cálculo (Ingresos):</span>
+                                    <span class="text-white" id="studio-isr-ingresos">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-400">
+                                    <span>Deducciones Autorizadas:</span>
+                                    <span class="text-white" id="studio-isr-deducciones">$0.00</span>
+                                </div>
+                                <div class="border-t border-slate-800 my-2"></div>
+                                <div class="flex justify-between text-slate-300">
+                                    <span>ISR Régimen General (30%):</span>
+                                    <span id="studio-isr-general">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-slate-300">
+                                    <span>ISR RESICO PF (2.0%):</span>
+                                    <span id="studio-isr-resico">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-payroll-hr" class="tab-content hidden relative min-h-[400px]">
+                <!-- Premium Paywall Overlay -->
+                <div id="payroll-paywall" class="absolute inset-0 bg-darkBg/95 backdrop-blur-md z-30 flex flex-col items-center justify-center text-center p-8 border border-purpleNeon/30 rounded-2xl hidden">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-purpleNeon to-cyanNeon flex items-center justify-center shadow-lg shadow-purpleNeon/25 mb-4">
+                        <svg class="w-8 h-8 text-white animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyanNeon to-purpleNeon">Módulo Nómina & LFT Premium</h3>
+                    <p class="text-slate-400 text-sm max-w-md mt-2 mb-6">Las herramientas avanzadas de timbrado masivo, cálculos de IMSS/ISR y finiquitos de ley requieren un plan premium.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl w-full mb-6 font-mono text-left">
+                        <div class="border border-slate-800 bg-slate-950 p-4 rounded-xl flex flex-col justify-between hover:border-cyanNeon transition">
+                            <div>
+                                <h4 class="font-bold text-slate-100 text-sm">PyME Starter</h4>
+                                <p class="text-[10px] text-slate-500 mt-1">Hasta 10 empleados</p>
+                                <p class="text-xl font-bold text-cyanNeon mt-2">$499 <span class="text-xs text-slate-400">/ mes</span></p>
+                            </div>
+                            <button onclick="triggerUpgradeProcess('STARTER')" class="mt-4 w-full py-1.5 bg-cyanNeon text-black text-xs font-bold rounded hover:opacity-90">Suscribirse</button>
+                        </div>
+                        <div class="border border-purpleNeon/40 bg-slate-950 p-4 rounded-xl flex flex-col justify-between hover:border-purpleNeon transition relative">
+                            <span class="absolute -top-2.5 right-4 bg-purpleNeon text-white text-[9px] px-2 py-0.5 rounded-full font-sans uppercase font-bold">Popular</span>
+                            <div>
+                                <h4 class="font-bold text-slate-100 text-sm">Crecimiento</h4>
+                                <p class="text-[10px] text-slate-500 mt-1">Hasta 35 empleados + Inventarios</p>
+                                <p class="text-xl font-bold text-purpleNeon mt-2">$799 <span class="text-xs text-slate-400">/ mes</span></p>
+                            </div>
+                            <button onclick="triggerUpgradeProcess('CRECIMIENTO')" class="mt-4 w-full py-1.5 bg-purpleNeon text-white text-xs font-bold rounded hover:opacity-90">Suscribirse</button>
+                        </div>
+                        <div class="border border-slate-800 bg-slate-950 p-4 rounded-xl flex flex-col justify-between hover:border-cyanNeon transition">
+                            <div>
+                                <h4 class="font-bold text-slate-100 text-sm">Escala ERP</h4>
+                                <p class="text-[10px] text-slate-500 mt-1">Hasta 100 empleados + CxC/CxP</p>
+                                <p class="text-xl font-bold text-white mt-2">$1,299 <span class="text-xs text-slate-400">/ mes</span></p>
+                            </div>
+                            <button onclick="triggerUpgradeProcess('ESCALA')" class="mt-4 w-full py-1.5 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700">Suscribirse</button>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-slate-500 font-mono">Pasarela integrada con Stripe y retenciones fiscales calculadas.</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 md:col-span-1 space-y-4">
+                    <h3 class="text-xl font-bold">Personal y Nómina</h3>
+                    <div class="space-y-2" id="employee-list"></div>
+                </div>
+                <div class="glass-card p-6 md:col-span-2 space-y-6">
+                    <h3 class="text-xl font-bold">Cálculo de Recibo y Finiquitos LFT</h3>
+                    <div id="calculator-ui" class="space-y-6 hidden">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Nombre Completo</label>
+                                <input type="text" id="calc-emp-name" readonly class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-300">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Salario Diario (SD)</label>
+                                <input type="text" id="calc-emp-sd" readonly class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-300">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Días Trabajados (Nómina quincenal)</label>
+                                <input type="number" id="calc-dias-trabajados" value="15" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Tipo de Baja (Para Finiquito/Liquidación)</label>
+                                <select id="calc-tipo-baja" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                                    <option value="">Sólo Nómina Activa</option>
+                                    <option value="renuncia">Renuncia Voluntaria (Finiquito)</option>
+                                    <option value="despido_injustificado">Despido Injustificado (Liquidación)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Fecha de Baja (Si aplica)</label>
+                            <input type="date" id="calc-fecha-baja" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                        </div>
+                        <button onclick="runPayrollCalculation()" class="w-full py-2 bg-gradient-to-r from-purpleNeon to-cyanNeon text-white rounded font-semibold text-sm transition hover:opacity-90">
+                            Procesar Cálculo y Guardar Historial
+                        </button>
+                        <div id="payroll-results" class="border border-slate-800 rounded-xl bg-slate-950 p-5 font-mono text-sm space-y-3 hidden">
+                            <h4 class="font-bold text-center text-cyanNeon pb-2 border-b border-slate-800">Desglose de Conceptos LFT</h4>
+                            <div class="space-y-2 text-slate-300" id="payroll-breakdown"></div>
+                        </div>
+                    </div>
+                    <div id="no-calculator-message" class="text-center text-slate-500 font-mono text-sm py-12">
+                        Selecciona un empleado de la lista de la izquierda para abrir el calculador.
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-efos-center" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4">Vendor Blacklist SAT (Artículo 69-B)</h3>
+                    <p class="text-sm text-slate-400 mb-6">Lista oficial SAT cargada en base de datos. Cualquier coincidencia con el RFC Emisor de tus facturas generará una alerta de riesgo fiscal inmediata.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300 font-mono">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-slate-400 text-xs">
+                                    <th class="py-3 px-2">RFC</th>
+                                    <th class="py-3 px-2">Nombre / Razón Social</th>
+                                    <th class="py-3 px-2">Situación SAT</th>
+                                    <th class="py-3 px-2">Fecha Publicación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="efos-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="ai-chat-widget" class="fixed bottom-6 right-6 w-80 md:w-96 h-[480px] bg-slate-950/95 border border-cyanNeon/30 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden backdrop-blur-lg hidden transition-all duration-300">
+        <div class="bg-gradient-to-r from-purpleNeon to-cyanNeon p-4 flex justify-between items-center text-white">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-greenNeon animate-pulse"></div>
+                <span class="font-bold text-sm">Rey AI - Asistente Fiscal</span>
+            </div>
+            <button onclick="toggleAIChat()" class="text-white hover:text-slate-300 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="ai-messages" class="flex-grow p-4 overflow-y-auto space-y-3 font-mono text-xs text-slate-200">
+            <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg">
+                <p class="text-cyanNeon font-bold mb-1">Rey AI Agent:</p>
+                <p>¡Hola! Soy tu asistente fiscal especializado en Anexo 24 y CFDI 4.0. ¿Tienes alguna pregunta sobre pólizas, retenciones o el catálogo agrupador del SAT?</p>
+            </div>
+        </div>
+        <div class="p-3 border-t border-slate-800/80 bg-slate-950 flex gap-2">
+            <input type="text" id="ai-input" placeholder="Pregunta sobre impuestos..." onkeydown="if(event.key === 'Enter') sendAIChatMessage()" class="flex-grow bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:border-cyanNeon">
+            <button onclick="sendAIChatMessage()" class="bg-cyanNeon hover:bg-cyanNeon/85 text-black px-3 py-2 rounded-xl text-xs font-bold transition font-mono">
+                Enviar
+            </button>
+        </div>
+    </div>
+
+    <button onclick="toggleAIChat()" class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-tr from-purpleNeon to-cyanNeon flex items-center justify-center shadow-xl shadow-cyanNeon/20 hover:scale-105 transition duration-200 z-40">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+    </button>
+    <script src="app.js"></script>
+    <!-- MODAL: ADD ORGANIZATION -->
+    <div id="add-org-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-card p-6 w-96 max-w-full space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                <h4 class="font-bold text-lg text-white">Registrar Nueva Empresa</h4>
+                <button onclick="closeAddOrgModal()" class="text-slate-400 hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="text-slate-400 block mb-1">RFC de la Empresa</label>
+                    <input type="text" id="new-org-rfc" placeholder="e.g. EKU9003173C9" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-1">Razón Social</label>
+                    <input type="text" id="new-org-name" placeholder="e.g. PRODUCTOS ACME SA" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-1">SAT CIEC (Contraseña)</label>
+                    <input type="password" id="new-org-ciec" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeAddOrgModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-semibold">Cancelar</button>
+                <button onclick="submitNewOrganization()" class="flex-1 py-2 bg-cyanNeon text-black rounded text-xs font-bold">Agregar Empresa</button>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL: SIGNUP & LOGIN -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-card p-6 w-96 max-w-full space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                <h4 class="font-bold text-lg text-white" id="auth-title">Crear Cuenta (Sign Up)</h4>
+                <button onclick="closeAuthModal()" class="text-slate-400 hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <!-- Tab switches inside modal -->
+            <div class="flex border-b border-slate-800 font-mono text-xs">
+                <button onclick="toggleAuthTab('signup')" id="auth-tab-signup" class="flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold">Registrarse</button>
+                <button onclick="toggleAuthTab('login')" id="auth-tab-login" class="flex-grow py-2 text-slate-400">Iniciar Sesión</button>
+            </div>
+
+            <!-- Form: Signup -->
+            <div id="auth-form-signup" class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Nombre de Usuario</label>
+                    <input type="text" id="signup-username" placeholder="e.g. admin_slp" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Email Corporativo</label>
+                    <input type="email" id="signup-email" placeholder="e.g. contacto@despacho.mx" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Contraseña</label>
+                    <input type="password" id="signup-password" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div class="border-t border-slate-900 my-2"></div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Tu RFC (Para crear tu primer empresa)</label>
+                    <input type="text" id="signup-rfc" placeholder="e.g. RFX010101AA1" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Nombre / Razón Social Empresa</label>
+                    <input type="text" id="signup-name" placeholder="e.g. DESPACHO FISCAL SAN LUIS" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <button onclick="submitSignup()" class="w-full py-2 bg-gradient-to-r from-purpleNeon to-cyanNeon text-white rounded font-bold mt-2">Crear Cuenta y Empresa</button>
+            </div>
+
+            <!-- Form: Login -->
+            <div id="auth-form-login" class="space-y-3 font-mono text-xs hidden">
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Nombre de Usuario</label>
+                    <input type="text" id="login-username" placeholder="e.g. admin_slp" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <button onclick="submitLogin()" class="w-full py-2 bg-cyanNeon text-black rounded font-bold mt-4">Iniciar Sesión</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

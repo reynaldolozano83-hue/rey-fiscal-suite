@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Fecha="2026-08-08T09:30:00" TipoDeComprobante="E" SubTotal="5000.00" Total="5800.00" MetodoPago="PUE" FormaPago="03">
+  <cfdi:Emisor Rfc="MSO1205047A1" Nombre="MOCK SIMULACIONES OPERATIVAS SA DE CV" RegimenFiscal="601"/>
+  <cfdi:Receptor Rfc="RFX010101AA1" Nombre="REY TECH LABS SA DE CV" UsoCFDI="G03"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="84111500" Cantidad="1.0" Descripcion="Servicios de Asesoria Fiscal Inexistente" ValorUnitario="5000.00" Importe="5000.00"/>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="800.00">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="5000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="800.00"/>
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" UUID="AE4D5F8A-321B-4C9D-AA9E-8EFA391C083D"/>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

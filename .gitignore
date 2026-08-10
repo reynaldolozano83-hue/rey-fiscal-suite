@@ -1,0 +1,11 @@
+# Local databases
+*.db
+*.db-journal
+*.sqlite3
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Local log files
+*.log
