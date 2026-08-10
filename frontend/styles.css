@@ -215,3 +215,14 @@ body.light-theme #org-switcher {
     border-color: #cbd5e1 !important;
     color: #0f172a !important;
 }
+
+/* Explicit option tag styles for both dark and light modes */
+#org-switcher option {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+}
+
+body.light-theme #org-switcher option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
