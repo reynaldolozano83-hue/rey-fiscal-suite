@@ -437,6 +437,7 @@
                                     <option value="">Sólo Nómina Activa</option>
                                     <option value="renuncia">Renuncia Voluntaria (Finiquito)</option>
                                     <option value="despido_injustificado">Despido Injustificado (Liquidación)</option>
+                                    <option value="aguinaldo_anual">Aguinaldo Anual (Diciembre)</option>
                                 </select>
                             </div>
                         </div>
@@ -448,6 +449,16 @@
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">Horas Extras Triples (LFT)</label>
                                 <input type="number" id="calc-horas-triples" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Otros Bonos y Comisiones ($)</label>
+                                <input type="number" id="calc-bonos" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Fondo de Ahorro (%)</label>
+                                <input type="number" id="calc-fondo-ahorro" value="10" min="0" max="30" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm font-mono text-slate-100">
                             </div>
                         </div>
                         <div>
