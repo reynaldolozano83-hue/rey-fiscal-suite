@@ -260,3 +260,15 @@ body.light-theme #add-employee-modal input {
     border-color: #cbd5e1 !important;
     color: #0f172a !important;
 }
+
+/* Modal specific inputs for light theme - Product */
+body.light-theme #add-product-modal .glass-card {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-theme #add-product-modal input, body.light-theme #add-product-modal select {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}

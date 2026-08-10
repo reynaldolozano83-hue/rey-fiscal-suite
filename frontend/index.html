@@ -93,6 +93,10 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         <span>EFOS List (Art 69-B)</span>
                     </button>
+                    <button onclick="switchTab('inventory-tab')" id="btn-inventory-tab" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                        <span>Inventarios</span>
+                    </button>
                 </nav>
             </div>
 
@@ -525,6 +529,34 @@
                     </div>
                 </div>
             </section>
+            <section id="tab-inventory-tab" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6 space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold">Control de Inventario y Almacén</h3>
+                            <p class="text-xs text-slate-400 mt-1">Gestión de insumos, entradas, salidas y mermas en tiempo real.</p>
+                        </div>
+                        <button onclick="openAddProductModal()" class="px-4 py-2 bg-gradient-to-r from-purpleNeon to-cyanNeon text-white text-xs font-bold rounded-xl shadow-lg transition hover:opacity-90 cursor-pointer">
+                            + Registrar Producto
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300 font-mono">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-slate-400 text-xs">
+                                    <th class="py-3 px-4">Producto</th>
+                                    <th class="py-3 px-4 text-right">Stock Actual</th>
+                                    <th class="py-3 px-4">Unidad</th>
+                                    <th class="py-3 px-4">Último Movimiento</th>
+                                    <th class="py-3 px-4 text-center">Acciones de Almacén</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-list-table">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -666,5 +698,34 @@
         </div>
     </div>
 
+    <!-- Modal: Add Product -->
+    <div id="add-product-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-card p-6 w-full max-w-sm border border-slate-800 bg-slate-950/95 rounded-2xl relative shadow-2xl">
+            <button onclick="closeAddProductModal()" class="absolute right-4 top-4 text-slate-500 hover:text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <h3 class="text-lg font-bold text-slate-100 mb-4 font-sans">Registrar Producto en Almacén</h3>
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Nombre del Insumo</label>
+                    <input type="text" id="prod-new-name" placeholder="e.g. Arroz, Frijol, Aceite" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Unidad de Medida</label>
+                    <select id="prod-new-unit" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 focus:outline-none focus:border-cyanNeon">
+                        <option value="Kg">Kilogramo (Kg)</option>
+                        <option value="Litros">Litros (L)</option>
+                        <option value="Pza">Pieza (Pza)</option>
+                        <option value="Cajas">Cajas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Cantidad Inicial (Stock)</label>
+                    <input type="number" id="prod-new-qty" value="0" min="0" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <button onclick="submitNewProduct()" class="w-full py-2 bg-cyanNeon text-black rounded font-bold mt-4 transition hover:opacity-90">Alta en Inventario</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
