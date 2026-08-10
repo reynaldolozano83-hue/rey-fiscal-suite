@@ -238,6 +238,27 @@
 
             <section id="tab-xml-vault" class="tab-content hidden space-y-6">
                 <div class="glass-card p-6">
+                    <!-- Demo Files Download Section -->
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-2 w-2 relative">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyanNeon opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-cyanNeon"></span>
+                            </span>
+                            <span class="text-slate-400">¿No tienes XMLs reales? Descarga nuestras facturas de prueba y cargalas con el boton superior:</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="demo_files/factura_ingreso_demo.xml" download class="px-3 py-1.5 bg-cyanNeon/10 hover:bg-cyanNeon/20 text-cyanNeon rounded-lg border border-cyanNeon/20 font-semibold transition flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                XML Ingreso
+                            </a>
+                            <a href="demo_files/factura_gasto_efos_demo.xml" download class="px-3 py-1.5 bg-amberNeon/10 hover:bg-amberNeon/20 text-amber-400 rounded-lg border border-amber-500/20 font-semibold transition flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                XML Gasto (EFOS)
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold">Bóveda Digital XML CFDI</h3>
                         <button onclick="downloadDIOT()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 text-sm font-semibold transition font-mono">
