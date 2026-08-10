@@ -405,7 +405,12 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="glass-card p-6 md:col-span-1 space-y-4">
-                    <h3 class="text-xl font-bold">Personal y Nómina</h3>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold">Personal y Nómina</h3>
+                        <button onclick="openAddEmployeeModal()" class="px-2.5 py-1 bg-cyanNeon/10 hover:bg-cyanNeon/20 text-cyanNeon rounded-lg border border-cyanNeon/20 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer">
+                            + Empleado
+                        </button>
+                    </div>
                     <div class="space-y-2" id="employee-list"></div>
                 </div>
                 <div class="glass-card p-6 md:col-span-2 space-y-6">
