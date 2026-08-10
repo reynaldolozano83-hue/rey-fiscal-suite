@@ -1,1502 +1,1504 @@
-let activeUserId = 1;
-
-// App Controller for Rey Fiscal Suite
-
-
-
-const API_BASE = "http://127.0.0.1:8020/api";
-
-let currentTab = "dashboard";
-
-let selectedEmployee = null;
-
-
-
-let activeOrgId = 1;
-
-let currentOrg = null;
-
-
-
-// Tab management
-
-function switchTab(tabId) {
-
-    document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-
-    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
-
-    
-
-    document.getElementById(`tab-${tabId}`).classList.remove("hidden");
-
-    document.getElementById(`btn-${tabId}`).classList.add("active");
-
-    
-
-    const titles = {
-
-        'dashboard': ['Command Center', 'Resumen fiscal de facturas y obligaciones del periodo.'],
-
-        'xml-vault': ['XML Vault', 'Historial completo de comprobantes emitidos y recibidos.'],
-
-        'policy-builder': ['Policy Builder', 'Asiento contable automático generado mediante reglas de negocio.'],
-
-        'tax-studio': ['Tax Studio', 'Estudio fiscal e impuestos acreditables vs. causados.'],
-
-        'payroll-hr': ['Payroll & LFT', 'Cálculos de nómina quincenal, fondo de ahorro, finiquitos y liquidaciones.'],
-
-        'efos-center': ['Blacklist SAT', 'Empresas Facturadoras de Operaciones Simuladas (Artículo 69-B).']
-
-    };
-
-    
-
-    document.getElementById("view-title").innerText = titles[tabId][0];
-
-    document.getElementById("view-subtitle").innerText = titles[tabId][1];
-
-    
-
-    currentTab = tabId;
-
-    
-
-    if (tabId === 'payroll-hr') {
-
-        checkPaywallStatus();
-
-    }
-
-}
-
-
-
-// Check Paywall Display
-
-function checkPaywallStatus() {
-
-    const paywall = document.getElementById("payroll-paywall");
-
-    if (!paywall) return;
-
-    
-
-    // Allow access if plan is STARTER, CRECIMIENTO or ESCALA and Active
-
-    const hasPremium = currentOrg && 
-
-                       ['STARTER', 'CRECIMIENTO', 'ESCALA', 'PREMIUM'].includes(currentOrg.plan_type) && 
-
-                       currentOrg.subscription_status === 'Active';
-
-                       
-
-    if (hasPremium) {
-
-        paywall.classList.add("hidden");
-
-    } else {
-
-        paywall.classList.remove("hidden");
-
-    }
-
-}
-
-
-
-// Trigger subscription upgrade (Stripe simulator)
-
-async function triggerUpgradeProcess(planTier) {
-
-    try {
-
-        const res = await fetch(`${API_BASE}/organizations/${activeOrgId}/upgrade`, {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({ plan_tier: planTier })
-
-        });
-
-        const data = await res.json();
-
-        if (data.status === 'success') {
-
-            alert(`¡Pago procesado exitosamente por Stripe! Plan actualizado a PyME ${planTier}.`);
-
-            await loadOrganizations();
-
-            switchTab('payroll-hr');
-
-        } else {
-
-            alert("Error al procesar el pago de suscripción.");
-
-        }
-
-    } catch(e) {
-
-        console.error(e);
-
-        alert("Error al conectar con la pasarela de pago.");
-
-    }
-
-}
-
-
-
-// Load organizations for switcher
-
-// Toggle custom dropdown menu
-function toggleCustomDropdown() {
-    const menu = document.getElementById("custom-org-menu");
-    menu.classList.toggle("hidden");
-}
-
-// Close when clicking outside
-window.addEventListener("click", (e) => {
-    const btn = document.getElementById("custom-org-btn");
-    const menu = document.getElementById("custom-org-menu");
-    if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
-        menu.classList.add("hidden");
-    }
-});
-
-// Load organizations for switcher
-async function loadOrganizations() {
-    try {
-        const res = await fetch(`${API_BASE}/organizations`);
-        const orgs = await res.json();
-        
-        const listContainer = document.getElementById("custom-org-list");
-        if (!listContainer) return;
-        listContainer.innerHTML = "";
-        
-        // Find current organization
-        currentOrg = orgs.find(o => o.id === activeOrgId) || orgs[0];
-        if (currentOrg) {
-            activeOrgId = currentOrg.id;
-            document.getElementById("selected-org-name").innerText = `${currentOrg.rfc} - ${currentOrg.razon_social.substring(0,12)}...`;
-        }
-        
-        orgs.forEach(o => {
-            const btn = document.createElement("button");
-            btn.className = "block w-full text-left px-4 py-2 hover:bg-slate-900 hover:text-white text-slate-300 transition-colors";
-            btn.innerText = `${o.rfc} - ${o.razon_social.substring(0,18)}...`;
-            btn.onclick = async () => {
-                activeOrgId = o.id;
-                document.getElementById("custom-org-menu").classList.add("hidden");
-                await loadOrganizations();
-                await loadDashboardData();
-                await loadPolizas();
-                await loadEmployees();
-            };
-            listContainer.appendChild(btn);
-        });
-        
-        if (currentOrg) {
-            document.getElementById("org-plan-badge").innerText = currentOrg.plan_type;
-            const indicator = document.getElementById("org-status-indicator");
-            if (currentOrg.plan_type === 'PREMIUM') {
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-cyanNeon shadow-lg shadow-cyanNeon/50";
-            } else {
-                indicator.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
-            }
-        }
-        
-        checkPaywallStatus();
-        await loadAccountantStatus();
-    } catch (e) {
-        console.error("Error loading organizations:", e);
-    }
-}
-
-async function changeActiveOrg(id) {
-
-    activeOrgId = parseInt(id);
-
-    await loadOrganizations();
-
-}
-
-
-
-// Initial API Loaders
-
-async function loadDashboardData() {
-
-    try {
-
-        const statusRes = await fetch(`${API_BASE}/status?org_id=${activeOrgId}`);
-
-        const status = await statusRes.json();
-
-        
-
-        // Update stats
-
-        document.getElementById("cfdis-count-badge").innerText = status.cfdis_count;
-
-        
-
-        const cfdisRes = await fetch(`${API_BASE}/cfdis?org_id=${activeOrgId}`);
-
-        const cfdis = await cfdisRes.json();
-
-        
-
-        // Render Dashboard Table
-
-        const dashboardTbody = document.getElementById("dashboard-cfdi-tbody");
-
-        dashboardTbody.innerHTML = "";
-
-        
-
-        let totalIngresos = 0;
-
-        let totalEgresos = 0;
-
-        
-
-        cfdis.forEach(c => {
-
-            if (c.tipo === 'I') totalIngresos += c.total;
-
-            else if (c.tipo === 'E') totalEgresos += c.total;
-
-            
-
-            const tr = document.createElement("tr");
-
-            tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-2";
-
-            tr.innerHTML = `
-
-                <td class="py-2 text-cyanNeon font-bold text-xs">${c.uuid.substring(0,8)}...</td>
-
-                <td class="py-2">${c.emisor_rfc}</td>
-
-                <td class="py-2 text-slate-400 truncate max-w-[150px]">${c.emisor_nombre}</td>
-
-                <td class="py-2 text-xs">${c.fecha.substring(0,10)}</td>
-
-                <td class="py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${c.tipo === 'I' ? 'bg-greenNeon/10 text-greenNeon' : 'bg-purpleNeon/10 text-purpleNeon'}">${c.tipo}</span></td>
-
-                <td class="py-2 text-right font-bold">$${c.total.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-
-            `;
-
-            dashboardTbody.appendChild(tr);
-
-        });
-
-        
-
-        document.getElementById("stat-ingresos").innerText = `$${totalIngresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("stat-egresos").innerText = `$${totalEgresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        
-
-        // Load taxes
-
-        const taxesRes = await fetch(`${API_BASE}/taxes?org_id=${activeOrgId}`);
-
-        const taxes = await taxesRes.json();
-
-        
-
-        document.getElementById("stat-iva").innerText = `$${taxes.iva_a_pagar.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        
-
-        // Update quick Tax studio cards
-
-        document.getElementById("tax-isr-ingresos").innerText = `$${taxes.isr_ingresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("tax-isr-deducciones").innerText = `$${taxes.isr_deducciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("tax-isr-base").innerText = `$${taxes.isr_base_gravable.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("tax-isr-rg").innerText = `$${taxes.isr_provisional_general.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("tax-isr-resico").innerText = `$${taxes.isr_provisional_resico.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        
-
-        // Update Tax Studio Tab
-
-        document.getElementById("studio-iva-cobrado").innerText = `$${taxes.iva_cobrado.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-iva-acreditable").innerText = `$${taxes.iva_acreditable.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-iva-retenciones").innerText = `$${taxes.iva_retenciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-iva-total").innerText = `$${taxes.iva_a_pagar.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-isr-ingresos").innerText = `$${taxes.isr_ingresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-isr-deducciones").innerText = `$${taxes.isr_deducciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-isr-general").innerText = `$${taxes.isr_provisional_general.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-        document.getElementById("studio-isr-resico").innerText = `$${taxes.isr_provisional_resico.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
-
-
-
-        // EFOS warning checks
-
-        let efosAlertCount = 0;
-
-        cfdis.forEach(c => {
-
-            if(c.efos_status !== 'Limpio') efosAlertCount++;
-
-        });
-
-        
-
-        const efosCard = document.getElementById("efos-status-card");
-
-        const efosTitle = document.getElementById("stat-efos-alerts");
-
-        if(efosAlertCount > 0) {
-
-            efosTitle.innerText = `${efosAlertCount} Alertas`;
-
-            efosTitle.className = "text-2xl font-bold mt-2 text-rose-500";
-
-            efosCard.style.borderColor = "rgba(244, 63, 94, 0.4)";
-
-        } else {
-
-            efosTitle.innerText = "Sin Alertas";
-
-            efosTitle.className = "text-2xl font-bold mt-2 text-white";
-
-            efosCard.style.borderColor = "rgba(0, 240, 255, 0.12)";
-
-        }
-
-
-
-        // Render Vault Tab
-
-        const vaultTbody = document.getElementById("vault-tbody");
-
-        vaultTbody.innerHTML = "";
-
-        cfdis.forEach(c => {
-
-            const tr = document.createElement("tr");
-
-            tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-3";
-
-            tr.innerHTML = `
-
-                <td class="py-3 px-2 text-cyanNeon font-bold text-xs">${c.uuid}</td>
-
-                <td class="py-3 px-2">
-
-                    <div class="font-bold">${c.emisor_rfc}</div>
-
-                    <div class="text-[10px] text-slate-400 truncate max-w-[200px]">${c.emisor_nombre}</div>
-
-                </td>
-
-                <td class="py-3 px-2">${c.receptor_rfc}</td>
-
-                <td class="py-3 px-2 text-xs">${c.fecha.replace("T", " ")}</td>
-
-                <td class="py-3 px-2 font-semibold text-xs text-slate-300">${c.metodo_pago || 'PPD'}</td>
-
-                <td class="py-3 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${c.efos_status === 'Limpio' ? 'bg-greenNeon/10 text-greenNeon' : 'bg-rose-500/10 text-rose-500'}">${c.efos_status}</span></td>
-
-                <td class="py-3 px-2 text-right">$${c.subtotal.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-
-                <td class="py-3 px-2 text-right">$${c.impuestos_trasladados.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-
-                <td class="py-3 px-2 text-right font-bold text-white">$${c.total.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
-
-            `;
-
-            vaultTbody.appendChild(tr);
-
-        });
-
-
-
-    } catch (err) {
-
-        console.error("Error loading dashboard data:", err);
-
-    }
-
-}
-
-
-
-async function loadPolizas() {
-
-    try {
-
-        const res = await fetch(`${API_BASE}/polizas?org_id=${activeOrgId}`);
-
-        const polizas = await res.json();
-
-        
-
-        const listContainer = document.getElementById("policy-list");
-
-        listContainer.innerHTML = "";
-
-        
-
-        polizas.forEach(p => {
-
-            const card = document.createElement("div");
-
-            card.className = "border border-slate-800 p-4 rounded-xl bg-slate-900/40 cursor-pointer hover:border-cyanNeon/40 transition";
-
-            card.onclick = () => viewPolicyXML(p.xml_uuid);
-
-            
-
-            let itemsHtml = "";
-
-            p.cargos_abonos.forEach(item => {
-
-                itemsHtml += `
-
-                    <div class="flex justify-between text-xs font-mono py-0.5 border-b border-slate-950/40">
-
-                        <span class="text-slate-400">${item.cuenta} - ${item.concepto || 'Asiento'}</span>
-
-                        <span class="text-white">
-
-                            ${item.cargo > 0 ? `Cargo: $${item.cargo.toFixed(2)}` : `Abono: $${item.abono.toFixed(2)}`}
-
-                        </span>
-
-                    </div>
-
-                `;
-
-            });
-
-            
-
-            card.innerHTML = `
-
-                <div class="flex justify-between items-center mb-2">
-
-                    <span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-mono">Póliza #${p.numero} - ${p.tipo}</span>
-
-                    <span class="text-xs text-slate-500">${p.fecha}</span>
-
-                </div>
-
-                <h5 class="text-sm font-semibold mb-2 text-white">${p.concepto}</h5>
-
-                <div class="space-y-1">${itemsHtml}</div>
-
-            `;
-
-            listContainer.appendChild(card);
-
-        });
-
-    } catch (e) {
-
-        console.error(e);
-
-    }
-
-}
-
-
-
-async function viewPolicyXML(uuid) {
-
-    if(!uuid) return;
-
-    try {
-
-        const res = await fetch(`${API_BASE}/cfdis?org_id=${activeOrgId}`);
-
-        const cfdis = await res.json();
-
-        const cfdi = cfdis.find(c => c.uuid === uuid);
-
-        if(cfdi && cfdi.xml_content) {
-
-            document.getElementById("policy-xml-viewer").innerText = cfdi.xml_content;
-
-        } else {
-
-            document.getElementById("policy-xml-viewer").innerText = "No se localizó el XML original.";
-
-        }
-
-    } catch(e) {
-
-        console.error(e);
-
-    }
-
-}
-
-
-
-async function loadEFOS() {
-
-    try {
-
-        const res = await fetch(`${API_BASE}/efos`);
-
-        const data = await res.json();
-
-        const tbody = document.getElementById("efos-tbody");
-
-        tbody.innerHTML = "";
-
-        
-
-        data.forEach(e => {
-
-            const tr = document.createElement("tr");
-
-            tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-3";
-
-            tr.innerHTML = `
-
-                <td class="py-3 px-2 text-rose-500 font-bold">${e.rfc}</td>
-
-                <td class="py-3 px-2 text-white">${e.razon_social}</td>
-
-                <td class="py-3 px-2 font-bold">${e.situacion}</td>
-
-                <td class="py-3 px-2 text-slate-400 text-xs">${e.publicacion_sat || 'N/A'}</td>
-
-            `;
-
-            tbody.appendChild(tr);
-
-        });
-
-    } catch (e) {
-
-        console.error(e);
-
-    }
-
-}
-
-
-
-async function loadEmployees() {
-
-    try {
-
-        const res = await fetch(`${API_BASE}/employees?org_id=${activeOrgId}`);
-
-        const list = await res.json();
-
-        
-
-        const container = document.getElementById("employee-list");
-
-        container.innerHTML = "";
-
-        
-
-        list.forEach(e => {
-
-            const btn = document.createElement("button");
-
-            btn.className = "w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-900/40 hover:border-cyanNeon transition flex justify-between items-center";
-
-            btn.onclick = () => selectEmployee(e);
-
-            
-
-            btn.innerHTML = `
-
-                <div>
-
-                    <h5 class="font-bold text-sm text-white">${e.nombre}</h5>
-
-                    <p class="text-xs text-slate-400 font-mono">${e.rfc}</p>
-
-                </div>
-
-                <div class="text-right">
-
-                    <span class="text-xs text-cyanNeon font-bold font-mono">$${e.salario_diario.toFixed(2)}/d</span>
-
-                </div>
-
-            `;
-
-            container.appendChild(btn);
-
-        });
-
-    } catch (e) {
-
-        console.error(e);
-
-    }
-
-}
-
-
-
-function selectEmployee(emp) {
-
-    selectedEmployee = emp;
-
-    document.getElementById("no-calculator-message").classList.add("hidden");
-
-    document.getElementById("calculator-ui").classList.remove("hidden");
-
-    
-
-    document.getElementById("calc-emp-name").value = emp.nombre;
-
-    document.getElementById("calc-emp-sd").value = `$${emp.salario_diario.toFixed(2)} MXN`;
-
-    document.getElementById("payroll-results").classList.add("hidden");
-
-}
-
-
-
-async function runPayrollCalculation() {
-
-    if(!selectedEmployee) return;
-
-    
-
-    const dias = parseInt(document.getElementById("calc-dias-trabajados").value) || 15;
-
-    const tipoBaja = document.getElementById("calc-tipo-baja").value;
-
-    const fechaBaja = document.getElementById("calc-fecha-baja").value;
-
-    
-
-    const bodyData = {
-
-        empleado_id: selectedEmployee.id,
-
-        dias_trabajados: dias
-
-    };
-
-    if (tipoBaja && fechaBaja) {
-
-        bodyData.tipo_baja = tipoBaja;
-
-        bodyData.fecha_baja = fechaBaja;
-
-    }
-
-    
-
-    try {
-
-        const res = await fetch(`${API_BASE}/payroll/calculate?org_id=${activeOrgId}`, {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify(bodyData)
-
-        });
-
-        
-
-        if (res.status === 403) {
-
-            const err = await res.json();
-
-            alert(err.detail);
-
-            return;
-
-        }
-
-        
-
-        const data = await res.json();
-
-        
-
-        // Show breakdown
-
-        document.getElementById("payroll-results").classList.remove("hidden");
-
-        const breakdown = document.getElementById("payroll-breakdown");
-
-        breakdown.innerHTML = "";
-
-        
-
-        const deg = data.desglose;
-
-        
-
-        if (data.tipo_calculo === 'Nomina') {
-
-            breakdown.innerHTML = `
-
-                <div class="flex justify-between"><span>Sueldo Bruto:</span><span class="text-white">$${deg.sueldo_bruto.toFixed(2)}</span></div>
-
-                <div class="flex justify-between text-rose-400"><span>(-) Retención ISR:</span><span>$${deg.isr_retenido.toFixed(2)}</span></div>
-
-                <div class="flex justify-between text-rose-400"><span>(-) IMSS Obrero:</span><span>$${deg.imss_obrero.toFixed(2)}</span></div>
-
-                <div class="flex justify-between text-rose-400"><span>(-) Ahorro Obrero:</span><span>$${deg.fondo_ahorro_obrero.toFixed(2)}</span></div>
-
-                <div class="flex justify-between text-greenNeon"><span>(+) Ahorro Aportación Patronal:</span><span>$${deg.fondo_ahorro_patron.toFixed(2)}</span></div>
-
-                <div class="border-t border-slate-800 my-2"></div>
-
-                <div class="flex justify-between text-lg font-bold text-white"><span>Neto a Pagar:</span><span class="text-cyanNeon">$${deg.neto_pagar.toFixed(2)}</span></div>
-
-            `;
-
-        } else {
-
-            breakdown.innerHTML = `
-
-                <div class="flex justify-between"><span>Años de Antigüedad:</span><span class="text-white">${deg.antiguedad_anos}</span></div>
-
-                <div class="flex justify-between"><span>Proporcional Aguinaldo:</span><span class="text-white">$${deg.aguinaldo.toFixed(2)}</span></div>
-
-                <div class="flex justify-between"><span>Proporcional Vacaciones:</span><span class="text-white">$${deg.vacaciones.toFixed(2)}</span></div>
-
-                <div class="flex justify-between"><span>Prima Vacacional:</span><span class="text-white">$${deg.prima_vacacional.toFixed(2)}</span></div>
-
-                ${deg.indemnizacion_90 > 0 ? `<div class="flex justify-between text-amberNeon"><span>Indemnización (90 días):</span><span>$${deg.indemnizacion_90.toFixed(2)}</span></div>` : ''}
-
-                ${deg.indemnizacion_20 > 0 ? `<div class="flex justify-between text-amberNeon"><span>Indemnización (20 días/año):</span><span>$${deg.indemnizacion_20.toFixed(2)}</span></div>` : ''}
-
-                ${deg.prima_antiguedad > 0 ? `<div class="flex justify-between text-amberNeon"><span>Prima de Antigüedad:</span><span>$${deg.prima_antiguedad.toFixed(2)}</span></div>` : ''}
-
-                <div class="border-t border-slate-800 my-2"></div>
-
-                <div class="flex justify-between text-lg font-bold text-white"><span>Total Liquidación Neto:</span><span class="text-greenNeon">$${deg.total_neto.toFixed(2)}</span></div>
-
-            `;
-
-        }
-
-    } catch (e) {
-
-        console.error(e);
-
-    }
-
-}
-
-
-
-async function uploadXMLFile(input) {
-
-    if (input.files.length === 0) return;
-
-    
-
-    const file = input.files[0];
-
-    const formData = new FormData();
-
-    formData.append("file", file);
-
-    formData.append("org_id", activeOrgId);
-
-    
-
-    try {
-
-        const res = await fetch(`${API_BASE}/cfdis/upload`, {
-
-            method: "POST",
-
-            body: formData
-
-        });
-
-        const data = await res.json();
-
-        
-
-        if (data.status === "success") {
-
-            alert(`CFDI cargado exitosamente. UUID: ${data.uuid}. Riesgo SAT: ${data.efos_status}`);
-
-            loadDashboardData();
-
-            loadPolizas();
-
-        } else {
-
-            alert("Error al cargar comprobante.");
-
-        }
-
-    } catch (e) {
-
-        console.error(e);
-
-        alert("Error de red al procesar el archivo.");
-
-    }
-
-}
-
-
-
-function triggerSATSync() {
-
-    const spinner = document.getElementById("sync-spinner");
-
-    spinner.classList.remove("hidden");
-
-    
-
-    setTimeout(() => {
-
-        spinner.classList.add("hidden");
-
-        alert("Sincronización SAT CIEC completada. Descargados 4 XMLs adicionales del día de hoy.");
-
-        loadDashboardData();
-
-        loadPolizas();
-
-    }, 2000);
-
-}
-
-
-
-function downloadDIOT() {
-
-    alert("Archivo DIOT batch generado (.txt con delimitador pipe | listo para carga Batch SAT).");
-
-}
-
-
-
-function exportAnexo24(type) {
-
-    alert(`Generando y descargando XML del Anexo 24: ${type === 'catalogo' ? 'Catálogo de Cuentas' : 'Balanza de Comprobación'}.`);
-
-}
-
-
-
-function toggleAIChat() {
-
-    const widget = document.getElementById("ai-chat-widget");
-
-    widget.classList.toggle("hidden");
-
-}
-
-
-
-async function sendAIChatMessage() {
-
-    const input = document.getElementById("ai-input");
-
-    const query = input.value.trim();
-
-    if(!query) return;
-
-    
-
-    appendChatMessage("Tú", query, "text-cyanNeon");
-
-    input.value = "";
-
-    
-
-    try {
-
-        const res = await fetch(`${API_BASE}/chat`, {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({ message: query })
-
-        });
-
-        const data = await res.json();
-
-        appendChatMessage("Rey AI Agent", data.reply, "text-purpleNeon");
-
-    } catch (e) {
-
-        appendChatMessage("System", "Error al conectar con el servidor AI.", "text-rose-500");
-
-    }
-
-}
-
-
-
-function appendChatMessage(sender, text, colorClass) {
-
-    const msgBox = document.getElementById("ai-messages");
-
-    const msg = document.createElement("div");
-
-    msg.className = "bg-slate-900 border border-slate-800 p-2.5 rounded-lg";
-
-    msg.innerHTML = `
-
-        <p class="${colorClass} font-bold mb-1">${sender}:</p>
-
-        <p>${text}</p>
-
-    `;
-
-    msgBox.appendChild(msg);
-
-    msgBox.scrollTop = msgBox.scrollHeight;
-
-}
-
-
-
-function setupWebSocket() {
-
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-    const wsHost = window.location.host.includes("localhost") || window.location.host.includes("127.0.0.1") 
-
-        ? "127.0.0.1:8020" 
-
-        : window.location.host;
-
-    const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/sync`);
-
-    ws.onopen = () => console.log("WebSocket connected.");
-
-    ws.onmessage = (event) => {
-
-        const data = JSON.parse(event.data);
-
-        if(data.event === "cfdi_uploaded") {
-
-            console.log("Real-time CFDI update received:", data);
-
-            loadDashboardData();
-
-        }
-
-    };
-
-    ws.onclose = () => {
-
-        setTimeout(setupWebSocket, 5000);
-
-    };
-
-}
-
-
-
-window.addEventListener("DOMContentLoaded", () => {
-
-    loadOrganizations();
-
-    loadEFOS();
-
-    setupWebSocket();
-
-});
-
-
-
-// Modal triggers
-
-function openAddOrgModal() {
-
-    document.getElementById("add-org-modal").classList.remove("hidden");
-
-}
-
-
-
-function closeAddOrgModal() {
-
-    document.getElementById("add-org-modal").classList.add("hidden");
-
-    document.getElementById("new-org-rfc").value = "";
-
-    document.getElementById("new-org-name").value = "";
-
-    document.getElementById("new-org-ciec").value = "";
-
-}
-
-
-
-async function submitNewOrganization() {
-
-    const rfc = document.getElementById("new-org-rfc").value.trim();
-
-    const name = document.getElementById("new-org-name").value.trim();
-
-    const ciec = document.getElementById("new-org-ciec").value.trim();
-
-    
-
-    if(!rfc || !name) {
-
-        alert("RFC y Razón Social son requeridos.");
-
-        return;
-
-    }
-
-    
-
-    try {
-
-        const res = await fetch(`${API_BASE}/v1/organizations/add`, {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({ rfc, razon_social: name, ciec })
-
-        });
-
-        const data = await res.json();
-
-        
-
-        if (data.status === 'success') {
-
-            alert(`Empresa registrada exitosamente. RFC: ${data.rfc}`);
-
-            closeAddOrgModal();
-
-            activeOrgId = data.organization_id;
-
-            await loadOrganizations();
-
-        } else {
-
-            alert(`Error al registrar empresa: ${data.detail}`);
-
-        }
-
-    } catch(e) {
-
-        console.error(e);
-
-        alert("Error de red al agregar empresa.");
-
-    }
-
-}
-
-
-
-// Auth Control Functions
-
-function openAuthModal() {
-
-    document.getElementById("auth-modal").classList.remove("hidden");
-
-    toggleAuthTab('signup');
-
-}
-
-
-
-function closeAuthModal() {
-
-    document.getElementById("auth-modal").classList.add("hidden");
-
-    // Clear inputs
-
-    document.getElementById("signup-username").value = "";
-
-    document.getElementById("signup-email").value = "";
-
-    document.getElementById("signup-password").value = "";
-
-    document.getElementById("signup-rfc").value = "";
-
-    document.getElementById("signup-name").value = "";
-
-    document.getElementById("login-username").value = "";
-
-    document.getElementById("login-password").value = "";
-
-}
-
-
-
-function toggleAuthTab(tab) {
-
-    const signupBtn = document.getElementById("auth-tab-signup");
-
-    const loginBtn = document.getElementById("auth-tab-login");
-
-    const signupForm = document.getElementById("auth-form-signup");
-
-    const loginForm = document.getElementById("auth-form-login");
-
-    
-
-    if (tab === 'signup') {
-
-        signupBtn.className = "flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold";
-
-        loginBtn.className = "flex-grow py-2 text-slate-400";
-
-        signupForm.classList.remove("hidden");
-
-        loginForm.classList.add("hidden");
-
-        document.getElementById("auth-title").innerText = "Crear Cuenta (Sign Up)";
-
-    } else {
-
-        loginBtn.className = "flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold";
-
-        signupBtn.className = "flex-grow py-2 text-slate-400";
-
-        loginForm.classList.remove("hidden");
-
-        signupForm.classList.add("hidden");
-
-        document.getElementById("auth-title").innerText = "Iniciar Sesión (Login)";
-
-    }
-
-}
-
-
-
-async function submitSignup() {
-
-    const username = document.getElementById("signup-username").value.trim();
-
-    const email = document.getElementById("signup-email").value.trim();
-
-    const password = document.getElementById("signup-password").value.trim();
-
-    const rfc = document.getElementById("signup-rfc").value.trim();
-
-    const name = document.getElementById("signup-name").value.trim();
-
-    
-
-    if (!username || !email || !password || !rfc || !name) {
-
-        alert("Todos los campos son obligatorios para el registro.");
-
-        return;
-
-    }
-
-    
-
-    try {
-
-        const res = await fetch(`${API_BASE}/v1/auth/signup`, {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({ username, email, password, rfc, razon_social: name })
-
-        });
-
-        const data = await res.json();
-
-        
-
-        if (data.status === 'success') {
-
-            alert(`¡Usuario ${data.username} registrado con éxito! Tu primer empresa ha sido creada.`);
-
-            closeAuthModal();
-
-            document.getElementById("nav-username").innerText = data.username;
-
-            activeUserId = data.user_id;
-
-            activeOrgId = data.organization_id;
-
-            await loadOrganizations();
-
-        } else {
-
-            alert(`Error al registrarse: ${data.detail}`);
-
-        }
-
-    } catch(e) {
-
-        console.error(e);
-
-        alert("Error de red durante el registro.");
-
-    }
-
-}
-
-
-
-async function submitLogin() {
-
-    const username = document.getElementById("login-username").value.trim();
-
-    const password = document.getElementById("login-password").value.trim();
-
-    
-
-    if (!username || !password) {
-
-        alert("Ingresa usuario y contraseña.");
-
-        return;
-
-    }
-
-    
-
-    try {
-
-        const res = await fetch(`${API_BASE}/v1/auth/login`, {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({ username, password })
-
-        });
-
-        
-
-        if (res.status === 401) {
-
-            alert("Credenciales incorrectas.");
-
-            return;
-
-        }
-
-        
-
-        const data = await res.json();
-
-        alert(`¡Bienvenido de nuevo, ${data.user.username}!`);
-
-        closeAuthModal();
-
-        
-
-        document.getElementById("nav-username").innerText = data.user.username;
-
-        activeUserId = data.user.id;
-
-        if (data.organizations.length > 0) {
-
-            activeOrgId = data.organizations[0].id;
-
-        }
-
-        await loadOrganizations();
-
-    } catch(e) {
-
-        console.error(e);
-
-        alert("Error al iniciar sesión.");
-
-    }
-
-}
-
-
-
-async function loadAccountantStatus() {
-
-    try {
-
-        const res = await fetch(`${API_BASE}/v1/users/${activeUserId}/status`);
-
-        if (!res.ok) return;
-
-        const user = await res.json();
-
-        
-
-        const planTypeSpan = document.getElementById("acc-plan-type");
-
-        const upgradeBtn = document.getElementById("acc-upgrade-btn");
-
-        const card = document.getElementById("accountant-sub-card");
-
-        
-
-        if (user.plan_type === 'PAID') {
-
-            let remainingDays = 30;
-
-            if (user.expires_at) {
-
-                const formattedDate = user.expires_at.replace(" ", "T");
-
-                const expiry = new Date(formattedDate);
-
-                const diffTime = expiry - new Date();
-
-                remainingDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-
-            }
-
-            planTypeSpan.innerText = `PRO (${remainingDays} DÍAS RESTANTES)`;
-
-            planTypeSpan.className = "text-cyanNeon font-bold";
-
-            upgradeBtn.classList.add("hidden");
-
-            card.className = "mb-6 p-3 bg-cyanNeon/5 border border-cyanNeon/20 rounded-xl space-y-1 font-mono text-[10px]";
-
-        } else {
-
-            planTypeSpan.innerText = "DEMO GRATIS";
-
-            planTypeSpan.className = "text-purpleNeon font-bold";
-
-            upgradeBtn.classList.remove("hidden");
-
-            card.className = "mb-6 p-3 bg-gradient-to-r from-purpleNeon/10 to-cyanNeon/10 border border-purpleNeon/30 rounded-xl space-y-2 font-mono text-[10px]";
-
-        }
-
-    } catch (e) {
-
-        console.error("Error loading accountant status:", e);
-
-    }
-
-}
-
-
-
-async function triggerAccountantUpgrade() {
-
-    try {
-
-        const res = await fetch(`${API_BASE}/v1/users/${activeUserId}/upgrade`, {
-
-            method: "POST"
-
-        });
-
-        const data = await res.json();
-
-        if (data.status === 'success') {
-
-            alert("¡Suscripción de Despacho PRO activada por $199/mes! Gracias por tu confianza.");
-
-            await loadAccountantStatus();
-
-        } else {
-
-            alert("Error al procesar el pago de suscripción de despacho.");
-
-        }
-
-    } catch(e) {
-
-        console.error(e);
-
-        alert("Error de red al actualizar suscripción.");
-
-    }
-
-}
-
-
-
-// Theme Toggle Functionality
-
-function toggleTheme() {
-
-    const body = document.body;
-
-    const themeIcon = document.getElementById("theme-icon");
-
-    
-
-    if (body.classList.contains("light-theme")) {
-
-        body.classList.remove("light-theme");
-
-        localStorage.setItem("theme", "dark");
-
-        // Set Moon Icon
-
-        themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
-
-    } else {
-
-        body.classList.add("light-theme");
-
-        localStorage.setItem("theme", "light");
-
-        // Set Sun Icon
-
-        themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>`;
-
-    }
-
-}
-
-
-
-// Load saved theme on load
-
-window.addEventListener("DOMContentLoaded", () => {
-
-    const savedTheme = localStorage.getItem("theme");
-
-    const themeIcon = document.getElementById("theme-icon");
-
-    if (savedTheme === "light" && themeIcon) {
-
-        document.body.classList.add("light-theme");
-
-        themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>`;
-
-    }
-
-});
-
+let activeUserId = 1;
+
+// App Controller for Rey Fiscal Suite
+
+
+
+const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8020/api"
+    : `${window.location.origin}/api`;
+
+let currentTab = "dashboard";
+
+let selectedEmployee = null;
+
+
+
+let activeOrgId = 1;
+
+let currentOrg = null;
+
+
+
+// Tab management
+
+function switchTab(tabId) {
+
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+
+    document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+
+    
+
+    document.getElementById(`tab-${tabId}`).classList.remove("hidden");
+
+    document.getElementById(`btn-${tabId}`).classList.add("active");
+
+    
+
+    const titles = {
+
+        'dashboard': ['Command Center', 'Resumen fiscal de facturas y obligaciones del periodo.'],
+
+        'xml-vault': ['XML Vault', 'Historial completo de comprobantes emitidos y recibidos.'],
+
+        'policy-builder': ['Policy Builder', 'Asiento contable automático generado mediante reglas de negocio.'],
+
+        'tax-studio': ['Tax Studio', 'Estudio fiscal e impuestos acreditables vs. causados.'],
+
+        'payroll-hr': ['Payroll & LFT', 'Cálculos de nómina quincenal, fondo de ahorro, finiquitos y liquidaciones.'],
+
+        'efos-center': ['Blacklist SAT', 'Empresas Facturadoras de Operaciones Simuladas (Artículo 69-B).']
+
+    };
+
+    
+
+    document.getElementById("view-title").innerText = titles[tabId][0];
+
+    document.getElementById("view-subtitle").innerText = titles[tabId][1];
+
+    
+
+    currentTab = tabId;
+
+    
+
+    if (tabId === 'payroll-hr') {
+
+        checkPaywallStatus();
+
+    }
+
+}
+
+
+
+// Check Paywall Display
+
+function checkPaywallStatus() {
+
+    const paywall = document.getElementById("payroll-paywall");
+
+    if (!paywall) return;
+
+    
+
+    // Allow access if plan is STARTER, CRECIMIENTO or ESCALA and Active
+
+    const hasPremium = currentOrg && 
+
+                       ['STARTER', 'CRECIMIENTO', 'ESCALA', 'PREMIUM'].includes(currentOrg.plan_type) && 
+
+                       currentOrg.subscription_status === 'Active';
+
+                       
+
+    if (hasPremium) {
+
+        paywall.classList.add("hidden");
+
+    } else {
+
+        paywall.classList.remove("hidden");
+
+    }
+
+}
+
+
+
+// Trigger subscription upgrade (Stripe simulator)
+
+async function triggerUpgradeProcess(planTier) {
+
+    try {
+
+        const res = await fetch(`${API_BASE}/organizations/${activeOrgId}/upgrade`, {
+
+            method: "POST",
+
+            headers: { "Content-Type": "application/json" },
+
+            body: JSON.stringify({ plan_tier: planTier })
+
+        });
+
+        const data = await res.json();
+
+        if (data.status === 'success') {
+
+            alert(`¡Pago procesado exitosamente por Stripe! Plan actualizado a PyME ${planTier}.`);
+
+            await loadOrganizations();
+
+            switchTab('payroll-hr');
+
+        } else {
+
+            alert("Error al procesar el pago de suscripción.");
+
+        }
+
+    } catch(e) {
+
+        console.error(e);
+
+        alert("Error al conectar con la pasarela de pago.");
+
+    }
+
+}
+
+
+
+// Load organizations for switcher
+
+// Toggle custom dropdown menu
+function toggleCustomDropdown() {
+    const menu = document.getElementById("custom-org-menu");
+    menu.classList.toggle("hidden");
+}
+
+// Close when clicking outside
+window.addEventListener("click", (e) => {
+    const btn = document.getElementById("custom-org-btn");
+    const menu = document.getElementById("custom-org-menu");
+    if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add("hidden");
+    }
+});
+
+// Load organizations for switcher
+async function loadOrganizations() {
+    try {
+        const res = await fetch(`${API_BASE}/organizations`);
+        const orgs = await res.json();
+        
+        const listContainer = document.getElementById("custom-org-list");
+        if (!listContainer) return;
+        listContainer.innerHTML = "";
+        
+        // Find current organization
+        currentOrg = orgs.find(o => o.id === activeOrgId) || orgs[0];
+        if (currentOrg) {
+            activeOrgId = currentOrg.id;
+            document.getElementById("selected-org-name").innerText = `${currentOrg.rfc} - ${currentOrg.razon_social.substring(0,12)}...`;
+        }
+        
+        orgs.forEach(o => {
+            const btn = document.createElement("button");
+            btn.className = "block w-full text-left px-4 py-2 hover:bg-slate-900 hover:text-white text-slate-300 transition-colors";
+            btn.innerText = `${o.rfc} - ${o.razon_social.substring(0,18)}...`;
+            btn.onclick = async () => {
+                activeOrgId = o.id;
+                document.getElementById("custom-org-menu").classList.add("hidden");
+                await loadOrganizations();
+                await loadDashboardData();
+                await loadPolizas();
+                await loadEmployees();
+            };
+            listContainer.appendChild(btn);
+        });
+        
+        if (currentOrg) {
+            document.getElementById("org-plan-badge").innerText = currentOrg.plan_type;
+            const indicator = document.getElementById("org-status-indicator");
+            if (currentOrg.plan_type === 'PREMIUM') {
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-cyanNeon shadow-lg shadow-cyanNeon/50";
+            } else {
+                indicator.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
+            }
+        }
+        
+        checkPaywallStatus();
+        await loadAccountantStatus();
+    } catch (e) {
+        console.error("Error loading organizations:", e);
+    }
+}
+
+async function changeActiveOrg(id) {
+
+    activeOrgId = parseInt(id);
+
+    await loadOrganizations();
+
+}
+
+
+
+// Initial API Loaders
+
+async function loadDashboardData() {
+
+    try {
+
+        const statusRes = await fetch(`${API_BASE}/status?org_id=${activeOrgId}`);
+
+        const status = await statusRes.json();
+
+        
+
+        // Update stats
+
+        document.getElementById("cfdis-count-badge").innerText = status.cfdis_count;
+
+        
+
+        const cfdisRes = await fetch(`${API_BASE}/cfdis?org_id=${activeOrgId}`);
+
+        const cfdis = await cfdisRes.json();
+
+        
+
+        // Render Dashboard Table
+
+        const dashboardTbody = document.getElementById("dashboard-cfdi-tbody");
+
+        dashboardTbody.innerHTML = "";
+
+        
+
+        let totalIngresos = 0;
+
+        let totalEgresos = 0;
+
+        
+
+        cfdis.forEach(c => {
+
+            if (c.tipo === 'I') totalIngresos += c.total;
+
+            else if (c.tipo === 'E') totalEgresos += c.total;
+
+            
+
+            const tr = document.createElement("tr");
+
+            tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-2";
+
+            tr.innerHTML = `
+
+                <td class="py-2 text-cyanNeon font-bold text-xs">${c.uuid.substring(0,8)}...</td>
+
+                <td class="py-2">${c.emisor_rfc}</td>
+
+                <td class="py-2 text-slate-400 truncate max-w-[150px]">${c.emisor_nombre}</td>
+
+                <td class="py-2 text-xs">${c.fecha.substring(0,10)}</td>
+
+                <td class="py-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${c.tipo === 'I' ? 'bg-greenNeon/10 text-greenNeon' : 'bg-purpleNeon/10 text-purpleNeon'}">${c.tipo}</span></td>
+
+                <td class="py-2 text-right font-bold">$${c.total.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+
+            `;
+
+            dashboardTbody.appendChild(tr);
+
+        });
+
+        
+
+        document.getElementById("stat-ingresos").innerText = `$${totalIngresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("stat-egresos").innerText = `$${totalEgresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        
+
+        // Load taxes
+
+        const taxesRes = await fetch(`${API_BASE}/taxes?org_id=${activeOrgId}`);
+
+        const taxes = await taxesRes.json();
+
+        
+
+        document.getElementById("stat-iva").innerText = `$${taxes.iva_a_pagar.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        
+
+        // Update quick Tax studio cards
+
+        document.getElementById("tax-isr-ingresos").innerText = `$${taxes.isr_ingresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("tax-isr-deducciones").innerText = `$${taxes.isr_deducciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("tax-isr-base").innerText = `$${taxes.isr_base_gravable.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("tax-isr-rg").innerText = `$${taxes.isr_provisional_general.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("tax-isr-resico").innerText = `$${taxes.isr_provisional_resico.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        
+
+        // Update Tax Studio Tab
+
+        document.getElementById("studio-iva-cobrado").innerText = `$${taxes.iva_cobrado.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-iva-acreditable").innerText = `$${taxes.iva_acreditable.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-iva-retenciones").innerText = `$${taxes.iva_retenciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-iva-total").innerText = `$${taxes.iva_a_pagar.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-isr-ingresos").innerText = `$${taxes.isr_ingresos.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-isr-deducciones").innerText = `$${taxes.isr_deducciones.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-isr-general").innerText = `$${taxes.isr_provisional_general.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+        document.getElementById("studio-isr-resico").innerText = `$${taxes.isr_provisional_resico.toLocaleString('es-MX', {minimumFractionDigits:2})}`;
+
+
+
+        // EFOS warning checks
+
+        let efosAlertCount = 0;
+
+        cfdis.forEach(c => {
+
+            if(c.efos_status !== 'Limpio') efosAlertCount++;
+
+        });
+
+        
+
+        const efosCard = document.getElementById("efos-status-card");
+
+        const efosTitle = document.getElementById("stat-efos-alerts");
+
+        if(efosAlertCount > 0) {
+
+            efosTitle.innerText = `${efosAlertCount} Alertas`;
+
+            efosTitle.className = "text-2xl font-bold mt-2 text-rose-500";
+
+            efosCard.style.borderColor = "rgba(244, 63, 94, 0.4)";
+
+        } else {
+
+            efosTitle.innerText = "Sin Alertas";
+
+            efosTitle.className = "text-2xl font-bold mt-2 text-white";
+
+            efosCard.style.borderColor = "rgba(0, 240, 255, 0.12)";
+
+        }
+
+
+
+        // Render Vault Tab
+
+        const vaultTbody = document.getElementById("vault-tbody");
+
+        vaultTbody.innerHTML = "";
+
+        cfdis.forEach(c => {
+
+            const tr = document.createElement("tr");
+
+            tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-3";
+
+            tr.innerHTML = `
+
+                <td class="py-3 px-2 text-cyanNeon font-bold text-xs">${c.uuid}</td>
+
+                <td class="py-3 px-2">
+
+                    <div class="font-bold">${c.emisor_rfc}</div>
+
+                    <div class="text-[10px] text-slate-400 truncate max-w-[200px]">${c.emisor_nombre}</div>
+
+                </td>
+
+                <td class="py-3 px-2">${c.receptor_rfc}</td>
+
+                <td class="py-3 px-2 text-xs">${c.fecha.replace("T", " ")}</td>
+
+                <td class="py-3 px-2 font-semibold text-xs text-slate-300">${c.metodo_pago || 'PPD'}</td>
+
+                <td class="py-3 px-2"><span class="px-1.5 py-0.5 rounded text-[10px] ${c.efos_status === 'Limpio' ? 'bg-greenNeon/10 text-greenNeon' : 'bg-rose-500/10 text-rose-500'}">${c.efos_status}</span></td>
+
+                <td class="py-3 px-2 text-right">$${c.subtotal.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+
+                <td class="py-3 px-2 text-right">$${c.impuestos_trasladados.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+
+                <td class="py-3 px-2 text-right font-bold text-white">$${c.total.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+
+            `;
+
+            vaultTbody.appendChild(tr);
+
+        });
+
+
+
+    } catch (err) {
+
+        console.error("Error loading dashboard data:", err);
+
+    }
+
+}
+
+
+
+async function loadPolizas() {
+
+    try {
+
+        const res = await fetch(`${API_BASE}/polizas?org_id=${activeOrgId}`);
+
+        const polizas = await res.json();
+
+        
+
+        const listContainer = document.getElementById("policy-list");
+
+        listContainer.innerHTML = "";
+
+        
+
+        polizas.forEach(p => {
+
+            const card = document.createElement("div");
+
+            card.className = "border border-slate-800 p-4 rounded-xl bg-slate-900/40 cursor-pointer hover:border-cyanNeon/40 transition";
+
+            card.onclick = () => viewPolicyXML(p.xml_uuid);
+
+            
+
+            let itemsHtml = "";
+
+            p.cargos_abonos.forEach(item => {
+
+                itemsHtml += `
+
+                    <div class="flex justify-between text-xs font-mono py-0.5 border-b border-slate-950/40">
+
+                        <span class="text-slate-400">${item.cuenta} - ${item.concepto || 'Asiento'}</span>
+
+                        <span class="text-white">
+
+                            ${item.cargo > 0 ? `Cargo: $${item.cargo.toFixed(2)}` : `Abono: $${item.abono.toFixed(2)}`}
+
+                        </span>
+
+                    </div>
+
+                `;
+
+            });
+
+            
+
+            card.innerHTML = `
+
+                <div class="flex justify-between items-center mb-2">
+
+                    <span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-mono">Póliza #${p.numero} - ${p.tipo}</span>
+
+                    <span class="text-xs text-slate-500">${p.fecha}</span>
+
+                </div>
+
+                <h5 class="text-sm font-semibold mb-2 text-white">${p.concepto}</h5>
+
+                <div class="space-y-1">${itemsHtml}</div>
+
+            `;
+
+            listContainer.appendChild(card);
+
+        });
+
+    } catch (e) {
+
+        console.error(e);
+
+    }
+
+}
+
+
+
+async function viewPolicyXML(uuid) {
+
+    if(!uuid) return;
+
+    try {
+
+        const res = await fetch(`${API_BASE}/cfdis?org_id=${activeOrgId}`);
+
+        const cfdis = await res.json();
+
+        const cfdi = cfdis.find(c => c.uuid === uuid);
+
+        if(cfdi && cfdi.xml_content) {
+
+            document.getElementById("policy-xml-viewer").innerText = cfdi.xml_content;
+
+        } else {
+
+            document.getElementById("policy-xml-viewer").innerText = "No se localizó el XML original.";
+
+        }
+
+    } catch(e) {
+
+        console.error(e);
+
+    }
+
+}
+
+
+
+async function loadEFOS() {
+
+    try {
+
+        const res = await fetch(`${API_BASE}/efos`);
+
+        const data = await res.json();
+
+        const tbody = document.getElementById("efos-tbody");
+
+        tbody.innerHTML = "";
+
+        
+
+        data.forEach(e => {
+
+            const tr = document.createElement("tr");
+
+            tr.className = "border-b border-slate-900 hover:bg-slate-900/30 transition py-3";
+
+            tr.innerHTML = `
+
+                <td class="py-3 px-2 text-rose-500 font-bold">${e.rfc}</td>
+
+                <td class="py-3 px-2 text-white">${e.razon_social}</td>
+
+                <td class="py-3 px-2 font-bold">${e.situacion}</td>
+
+                <td class="py-3 px-2 text-slate-400 text-xs">${e.publicacion_sat || 'N/A'}</td>
+
+            `;
+
+            tbody.appendChild(tr);
+
+        });
+
+    } catch (e) {
+
+        console.error(e);
+
+    }
+
+}
+
+
+
+async function loadEmployees() {
+
+    try {
+
+        const res = await fetch(`${API_BASE}/employees?org_id=${activeOrgId}`);
+
+        const list = await res.json();
+
+        
+
+        const container = document.getElementById("employee-list");
+
+        container.innerHTML = "";
+
+        
+
+        list.forEach(e => {
+
+            const btn = document.createElement("button");
+
+            btn.className = "w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-900/40 hover:border-cyanNeon transition flex justify-between items-center";
+
+            btn.onclick = () => selectEmployee(e);
+
+            
+
+            btn.innerHTML = `
+
+                <div>
+
+                    <h5 class="font-bold text-sm text-white">${e.nombre}</h5>
+
+                    <p class="text-xs text-slate-400 font-mono">${e.rfc}</p>
+
+                </div>
+
+                <div class="text-right">
+
+                    <span class="text-xs text-cyanNeon font-bold font-mono">$${e.salario_diario.toFixed(2)}/d</span>
+
+                </div>
+
+            `;
+
+            container.appendChild(btn);
+
+        });
+
+    } catch (e) {
+
+        console.error(e);
+
+    }
+
+}
+
+
+
+function selectEmployee(emp) {
+
+    selectedEmployee = emp;
+
+    document.getElementById("no-calculator-message").classList.add("hidden");
+
+    document.getElementById("calculator-ui").classList.remove("hidden");
+
+    
+
+    document.getElementById("calc-emp-name").value = emp.nombre;
+
+    document.getElementById("calc-emp-sd").value = `$${emp.salario_diario.toFixed(2)} MXN`;
+
+    document.getElementById("payroll-results").classList.add("hidden");
+
+}
+
+
+
+async function runPayrollCalculation() {
+
+    if(!selectedEmployee) return;
+
+    
+
+    const dias = parseInt(document.getElementById("calc-dias-trabajados").value) || 15;
+
+    const tipoBaja = document.getElementById("calc-tipo-baja").value;
+
+    const fechaBaja = document.getElementById("calc-fecha-baja").value;
+
+    
+
+    const bodyData = {
+
+        empleado_id: selectedEmployee.id,
+
+        dias_trabajados: dias
+
+    };
+
+    if (tipoBaja && fechaBaja) {
+
+        bodyData.tipo_baja = tipoBaja;
+
+        bodyData.fecha_baja = fechaBaja;
+
+    }
+
+    
+
+    try {
+
+        const res = await fetch(`${API_BASE}/payroll/calculate?org_id=${activeOrgId}`, {
+
+            method: "POST",
+
+            headers: { "Content-Type": "application/json" },
+
+            body: JSON.stringify(bodyData)
+
+        });
+
+        
+
+        if (res.status === 403) {
+
+            const err = await res.json();
+
+            alert(err.detail);
+
+            return;
+
+        }
+
+        
+
+        const data = await res.json();
+
+        
+
+        // Show breakdown
+
+        document.getElementById("payroll-results").classList.remove("hidden");
+
+        const breakdown = document.getElementById("payroll-breakdown");
+
+        breakdown.innerHTML = "";
+
+        
+
+        const deg = data.desglose;
+
+        
+
+        if (data.tipo_calculo === 'Nomina') {
+
+            breakdown.innerHTML = `
+
+                <div class="flex justify-between"><span>Sueldo Bruto:</span><span class="text-white">$${deg.sueldo_bruto.toFixed(2)}</span></div>
+
+                <div class="flex justify-between text-rose-400"><span>(-) Retención ISR:</span><span>$${deg.isr_retenido.toFixed(2)}</span></div>
+
+                <div class="flex justify-between text-rose-400"><span>(-) IMSS Obrero:</span><span>$${deg.imss_obrero.toFixed(2)}</span></div>
+
+                <div class="flex justify-between text-rose-400"><span>(-) Ahorro Obrero:</span><span>$${deg.fondo_ahorro_obrero.toFixed(2)}</span></div>
+
+                <div class="flex justify-between text-greenNeon"><span>(+) Ahorro Aportación Patronal:</span><span>$${deg.fondo_ahorro_patron.toFixed(2)}</span></div>
+
+                <div class="border-t border-slate-800 my-2"></div>
+
+                <div class="flex justify-between text-lg font-bold text-white"><span>Neto a Pagar:</span><span class="text-cyanNeon">$${deg.neto_pagar.toFixed(2)}</span></div>
+
+            `;
+
+        } else {
+
+            breakdown.innerHTML = `
+
+                <div class="flex justify-between"><span>Años de Antigüedad:</span><span class="text-white">${deg.antiguedad_anos}</span></div>
+
+                <div class="flex justify-between"><span>Proporcional Aguinaldo:</span><span class="text-white">$${deg.aguinaldo.toFixed(2)}</span></div>
+
+                <div class="flex justify-between"><span>Proporcional Vacaciones:</span><span class="text-white">$${deg.vacaciones.toFixed(2)}</span></div>
+
+                <div class="flex justify-between"><span>Prima Vacacional:</span><span class="text-white">$${deg.prima_vacacional.toFixed(2)}</span></div>
+
+                ${deg.indemnizacion_90 > 0 ? `<div class="flex justify-between text-amberNeon"><span>Indemnización (90 días):</span><span>$${deg.indemnizacion_90.toFixed(2)}</span></div>` : ''}
+
+                ${deg.indemnizacion_20 > 0 ? `<div class="flex justify-between text-amberNeon"><span>Indemnización (20 días/año):</span><span>$${deg.indemnizacion_20.toFixed(2)}</span></div>` : ''}
+
+                ${deg.prima_antiguedad > 0 ? `<div class="flex justify-between text-amberNeon"><span>Prima de Antigüedad:</span><span>$${deg.prima_antiguedad.toFixed(2)}</span></div>` : ''}
+
+                <div class="border-t border-slate-800 my-2"></div>
+
+                <div class="flex justify-between text-lg font-bold text-white"><span>Total Liquidación Neto:</span><span class="text-greenNeon">$${deg.total_neto.toFixed(2)}</span></div>
+
+            `;
+
+        }
+
+    } catch (e) {
+
+        console.error(e);
+
+    }
+
+}
+
+
+
+async function uploadXMLFile(input) {
+
+    if (input.files.length === 0) return;
+
+    
+
+    const file = input.files[0];
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    formData.append("org_id", activeOrgId);
+
+    
+
+    try {
+
+        const res = await fetch(`${API_BASE}/cfdis/upload`, {
+
+            method: "POST",
+
+            body: formData
+
+        });
+
+        const data = await res.json();
+
+        
+
+        if (data.status === "success") {
+
+            alert(`CFDI cargado exitosamente. UUID: ${data.uuid}. Riesgo SAT: ${data.efos_status}`);
+
+            loadDashboardData();
+
+            loadPolizas();
+
+        } else {
+
+            alert("Error al cargar comprobante.");
+
+        }
+
+    } catch (e) {
+
+        console.error(e);
+
+        alert("Error de red al procesar el archivo.");
+
+    }
+
+}
+
+
+
+function triggerSATSync() {
+
+    const spinner = document.getElementById("sync-spinner");
+
+    spinner.classList.remove("hidden");
+
+    
+
+    setTimeout(() => {
+
+        spinner.classList.add("hidden");
+
+        alert("Sincronización SAT CIEC completada. Descargados 4 XMLs adicionales del día de hoy.");
+
+        loadDashboardData();
+
+        loadPolizas();
+
+    }, 2000);
+
+}
+
+
+
+function downloadDIOT() {
+
+    alert("Archivo DIOT batch generado (.txt con delimitador pipe | listo para carga Batch SAT).");
+
+}
+
+
+
+function exportAnexo24(type) {
+
+    alert(`Generando y descargando XML del Anexo 24: ${type === 'catalogo' ? 'Catálogo de Cuentas' : 'Balanza de Comprobación'}.`);
+
+}
+
+
+
+function toggleAIChat() {
+
+    const widget = document.getElementById("ai-chat-widget");
+
+    widget.classList.toggle("hidden");
+
+}
+
+
+
+async function sendAIChatMessage() {
+
+    const input = document.getElementById("ai-input");
+
+    const query = input.value.trim();
+
+    if(!query) return;
+
+    
+
+    appendChatMessage("Tú", query, "text-cyanNeon");
+
+    input.value = "";
+
+    
+
+    try {
+
+        const res = await fetch(`${API_BASE}/chat`, {
+
+            method: "POST",
+
+            headers: { "Content-Type": "application/json" },
+
+            body: JSON.stringify({ message: query })
+
+        });
+
+        const data = await res.json();
+
+        appendChatMessage("Rey AI Agent", data.reply, "text-purpleNeon");
+
+    } catch (e) {
+
+        appendChatMessage("System", "Error al conectar con el servidor AI.", "text-rose-500");
+
+    }
+
+}
+
+
+
+function appendChatMessage(sender, text, colorClass) {
+
+    const msgBox = document.getElementById("ai-messages");
+
+    const msg = document.createElement("div");
+
+    msg.className = "bg-slate-900 border border-slate-800 p-2.5 rounded-lg";
+
+    msg.innerHTML = `
+
+        <p class="${colorClass} font-bold mb-1">${sender}:</p>
+
+        <p>${text}</p>
+
+    `;
+
+    msgBox.appendChild(msg);
+
+    msgBox.scrollTop = msgBox.scrollHeight;
+
+}
+
+
+
+function setupWebSocket() {
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    const wsHost = window.location.host.includes("localhost") || window.location.host.includes("127.0.0.1") 
+
+        ? "127.0.0.1:8020" 
+
+        : window.location.host;
+
+    const ws = new WebSocket(`${wsProtocol}//${wsHost}/ws/sync`);
+
+    ws.onopen = () => console.log("WebSocket connected.");
+
+    ws.onmessage = (event) => {
+
+        const data = JSON.parse(event.data);
+
+        if(data.event === "cfdi_uploaded") {
+
+            console.log("Real-time CFDI update received:", data);
+
+            loadDashboardData();
+
+        }
+
+    };
+
+    ws.onclose = () => {
+
+        setTimeout(setupWebSocket, 5000);
+
+    };
+
+}
+
+
+
+window.addEventListener("DOMContentLoaded", () => {
+
+    loadOrganizations();
+
+    loadEFOS();
+
+    setupWebSocket();
+
+});
+
+
+
+// Modal triggers
+
+function openAddOrgModal() {
+
+    document.getElementById("add-org-modal").classList.remove("hidden");
+
+}
+
+
+
+function closeAddOrgModal() {
+
+    document.getElementById("add-org-modal").classList.add("hidden");
+
+    document.getElementById("new-org-rfc").value = "";
+
+    document.getElementById("new-org-name").value = "";
+
+    document.getElementById("new-org-ciec").value = "";
+
+}
+
+
+
+async function submitNewOrganization() {
+
+    const rfc = document.getElementById("new-org-rfc").value.trim();
+
+    const name = document.getElementById("new-org-name").value.trim();
+
+    const ciec = document.getElementById("new-org-ciec").value.trim();
+
+    
+
+    if(!rfc || !name) {
+
+        alert("RFC y Razón Social son requeridos.");
+
+        return;
+
+    }
+
+    
+
+    try {
+
+        const res = await fetch(`${API_BASE}/v1/organizations/add`, {
+
+            method: "POST",
+
+            headers: { "Content-Type": "application/json" },
+
+            body: JSON.stringify({ rfc, razon_social: name, ciec })
+
+        });
+
+        const data = await res.json();
+
+        
+
+        if (data.status === 'success') {
+
+            alert(`Empresa registrada exitosamente. RFC: ${data.rfc}`);
+
+            closeAddOrgModal();
+
+            activeOrgId = data.organization_id;
+
+            await loadOrganizations();
+
+        } else {
+
+            alert(`Error al registrar empresa: ${data.detail}`);
+
+        }
+
+    } catch(e) {
+
+        console.error(e);
+
+        alert("Error de red al agregar empresa.");
+
+    }
+
+}
+
+
+
+// Auth Control Functions
+
+function openAuthModal() {
+
+    document.getElementById("auth-modal").classList.remove("hidden");
+
+    toggleAuthTab('signup');
+
+}
+
+
+
+function closeAuthModal() {
+
+    document.getElementById("auth-modal").classList.add("hidden");
+
+    // Clear inputs
+
+    document.getElementById("signup-username").value = "";
+
+    document.getElementById("signup-email").value = "";
+
+    document.getElementById("signup-password").value = "";
+
+    document.getElementById("signup-rfc").value = "";
+
+    document.getElementById("signup-name").value = "";
+
+    document.getElementById("login-username").value = "";
+
+    document.getElementById("login-password").value = "";
+
+}
+
+
+
+function toggleAuthTab(tab) {
+
+    const signupBtn = document.getElementById("auth-tab-signup");
+
+    const loginBtn = document.getElementById("auth-tab-login");
+
+    const signupForm = document.getElementById("auth-form-signup");
+
+    const loginForm = document.getElementById("auth-form-login");
+
+    
+
+    if (tab === 'signup') {
+
+        signupBtn.className = "flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold";
+
+        loginBtn.className = "flex-grow py-2 text-slate-400";
+
+        signupForm.classList.remove("hidden");
+
+        loginForm.classList.add("hidden");
+
+        document.getElementById("auth-title").innerText = "Crear Cuenta (Sign Up)";
+
+    } else {
+
+        loginBtn.className = "flex-grow py-2 text-cyanNeon border-b-2 border-cyanNeon font-bold";
+
+        signupBtn.className = "flex-grow py-2 text-slate-400";
+
+        loginForm.classList.remove("hidden");
+
+        signupForm.classList.add("hidden");
+
+        document.getElementById("auth-title").innerText = "Iniciar Sesión (Login)";
+
+    }
+
+}
+
+
+
+async function submitSignup() {
+
+    const username = document.getElementById("signup-username").value.trim();
+
+    const email = document.getElementById("signup-email").value.trim();
+
+    const password = document.getElementById("signup-password").value.trim();
+
+    const rfc = document.getElementById("signup-rfc").value.trim();
+
+    const name = document.getElementById("signup-name").value.trim();
+
+    
+
+    if (!username || !email || !password || !rfc || !name) {
+
+        alert("Todos los campos son obligatorios para el registro.");
+
+        return;
+
+    }
+
+    
+
+    try {
+
+        const res = await fetch(`${API_BASE}/v1/auth/signup`, {
+
+            method: "POST",
+
+            headers: { "Content-Type": "application/json" },
+
+            body: JSON.stringify({ username, email, password, rfc, razon_social: name })
+
+        });
+
+        const data = await res.json();
+
+        
+
+        if (data.status === 'success') {
+
+            alert(`¡Usuario ${data.username} registrado con éxito! Tu primer empresa ha sido creada.`);
+
+            closeAuthModal();
+
+            document.getElementById("nav-username").innerText = data.username;
+
+            activeUserId = data.user_id;
+
+            activeOrgId = data.organization_id;
+
+            await loadOrganizations();
+
+        } else {
+
+            alert(`Error al registrarse: ${data.detail}`);
+
+        }
+
+    } catch(e) {
+
+        console.error(e);
+
+        alert("Error de red durante el registro.");
+
+    }
+
+}
+
+
+
+async function submitLogin() {
+
+    const username = document.getElementById("login-username").value.trim();
+
+    const password = document.getElementById("login-password").value.trim();
+
+    
+
+    if (!username || !password) {
+
+        alert("Ingresa usuario y contraseña.");
+
+        return;
+
+    }
+
+    
+
+    try {
+
+        const res = await fetch(`${API_BASE}/v1/auth/login`, {
+
+            method: "POST",
+
+            headers: { "Content-Type": "application/json" },
+
+            body: JSON.stringify({ username, password })
+
+        });
+
+        
+
+        if (res.status === 401) {
+
+            alert("Credenciales incorrectas.");
+
+            return;
+
+        }
+
+        
+
+        const data = await res.json();
+
+        alert(`¡Bienvenido de nuevo, ${data.user.username}!`);
+
+        closeAuthModal();
+
+        
+
+        document.getElementById("nav-username").innerText = data.user.username;
+
+        activeUserId = data.user.id;
+
+        if (data.organizations.length > 0) {
+
+            activeOrgId = data.organizations[0].id;
+
+        }
+
+        await loadOrganizations();
+
+    } catch(e) {
+
+        console.error(e);
+
+        alert("Error al iniciar sesión.");
+
+    }
+
+}
+
+
+
+async function loadAccountantStatus() {
+
+    try {
+
+        const res = await fetch(`${API_BASE}/v1/users/${activeUserId}/status`);
+
+        if (!res.ok) return;
+
+        const user = await res.json();
+
+        
+
+        const planTypeSpan = document.getElementById("acc-plan-type");
+
+        const upgradeBtn = document.getElementById("acc-upgrade-btn");
+
+        const card = document.getElementById("accountant-sub-card");
+
+        
+
+        if (user.plan_type === 'PAID') {
+
+            let remainingDays = 30;
+
+            if (user.expires_at) {
+
+                const formattedDate = user.expires_at.replace(" ", "T");
+
+                const expiry = new Date(formattedDate);
+
+                const diffTime = expiry - new Date();
+
+                remainingDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+            }
+
+            planTypeSpan.innerText = `PRO (${remainingDays} DÍAS RESTANTES)`;
+
+            planTypeSpan.className = "text-cyanNeon font-bold";
+
+            upgradeBtn.classList.add("hidden");
+
+            card.className = "mb-6 p-3 bg-cyanNeon/5 border border-cyanNeon/20 rounded-xl space-y-1 font-mono text-[10px]";
+
+        } else {
+
+            planTypeSpan.innerText = "DEMO GRATIS";
+
+            planTypeSpan.className = "text-purpleNeon font-bold";
+
+            upgradeBtn.classList.remove("hidden");
+
+            card.className = "mb-6 p-3 bg-gradient-to-r from-purpleNeon/10 to-cyanNeon/10 border border-purpleNeon/30 rounded-xl space-y-2 font-mono text-[10px]";
+
+        }
+
+    } catch (e) {
+
+        console.error("Error loading accountant status:", e);
+
+    }
+
+}
+
+
+
+async function triggerAccountantUpgrade() {
+
+    try {
+
+        const res = await fetch(`${API_BASE}/v1/users/${activeUserId}/upgrade`, {
+
+            method: "POST"
+
+        });
+
+        const data = await res.json();
+
+        if (data.status === 'success') {
+
+            alert("¡Suscripción de Despacho PRO activada por $199/mes! Gracias por tu confianza.");
+
+            await loadAccountantStatus();
+
+        } else {
+
+            alert("Error al procesar el pago de suscripción de despacho.");
+
+        }
+
+    } catch(e) {
+
+        console.error(e);
+
+        alert("Error de red al actualizar suscripción.");
+
+    }
+
+}
+
+
+
+// Theme Toggle Functionality
+
+function toggleTheme() {
+
+    const body = document.body;
+
+    const themeIcon = document.getElementById("theme-icon");
+
+    
+
+    if (body.classList.contains("light-theme")) {
+
+        body.classList.remove("light-theme");
+
+        localStorage.setItem("theme", "dark");
+
+        // Set Moon Icon
+
+        themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
+
+    } else {
+
+        body.classList.add("light-theme");
+
+        localStorage.setItem("theme", "light");
+
+        // Set Sun Icon
+
+        themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>`;
+
+    }
+
+}
+
+
+
+// Load saved theme on load
+
+window.addEventListener("DOMContentLoaded", () => {
+
+    const savedTheme = localStorage.getItem("theme");
+
+    const themeIcon = document.getElementById("theme-icon");
+
+    if (savedTheme === "light" && themeIcon) {
+
+        document.body.classList.add("light-theme");
+
+        themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>`;
+
+    }
+
+});
+
