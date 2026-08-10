@@ -184,3 +184,14 @@ body.light-theme .bg-slate-950\/80 {
 body.light-theme #nav-username {
     color: #0f172a !important;
 }
+
+/* Dropdown select overrides for Light Mode */
+body.light-theme #org-switcher {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+body.light-theme #org-switcher option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
