@@ -248,3 +248,15 @@ body.light-theme #custom-org-list button:hover {
     background-color: rgba(15, 23, 42, 0.04) !important;
     color: #0f172a !important;
 }
+
+/* Modal specific inputs for light theme */
+body.light-theme #add-employee-modal .glass-card {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-theme #add-employee-modal input {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}

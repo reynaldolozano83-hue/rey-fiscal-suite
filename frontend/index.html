@@ -588,5 +588,30 @@
             </div>
         </div>
     </div>
+    <!-- Modal: Add Employee -->
+    <div id="add-employee-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-card p-6 w-full max-w-sm border border-slate-800 bg-slate-950/95 rounded-2xl relative shadow-2xl">
+            <button onclick="closeAddEmployeeModal()" class="absolute right-4 top-4 text-slate-500 hover:text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <h3 class="text-lg font-bold text-slate-100 mb-4 font-sans">Registrar Nuevo Trabajador</h3>
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Nombre Completo</label>
+                    <input type="text" id="emp-new-name" placeholder="e.g. Juan Perez Lopez" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">RFC (13 caracteres)</label>
+                    <input type="text" id="emp-new-rfc" placeholder="e.g. PELJ800101ABC" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-0.5">Salario Diario (SD)</label>
+                    <input type="number" id="emp-new-salary" placeholder="e.g. 450" class="w-full bg-slate-900 border border-slate-800 rounded px-3 py-2 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyanNeon">
+                </div>
+                <button onclick="submitNewEmployee()" class="w-full py-2 bg-cyanNeon text-black rounded font-bold mt-4 transition hover:opacity-90">Registrar de Alta</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
