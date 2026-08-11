@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAT Express - Descarga tu Constancia de Situación Fiscal al instante</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-blue-900 flex items-center justify-center font-bold text-white text-base">SE</div>
+                <span class="font-bold text-slate-900 tracking-tight text-lg">SAT <span class="text-blue-900 font-normal">Express</span></span>
+            </div>
+            <div class="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Servidor SAT Conectado
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-lg mx-auto w-full px-6 py-10 flex flex-col justify-center">
+        
+        <!-- Welcome Hero -->
+        <div class="text-center mb-8" id="hero-header">
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Obtén tu Constancia en 1 minuto</h1>
+            <p class="text-sm text-slate-500 mt-2">Sin filas, sin hacer filas y 100% en línea. Descarga oficial en PDF.</p>
+        </div>
+
+        <!-- Wizard Card -->
+        <div class="bg-white border border-slate-200/60 rounded-3xl shadow-xl shadow-slate-100 p-6 md:p-8 space-y-6 relative overflow-hidden">
+            
+            <!-- Secure Badge Banner -->
+            <div class="flex items-center justify-center gap-2 text-[10px] text-slate-400 bg-slate-50 border border-slate-100 py-1.5 px-3 rounded-full font-mono">
+                <svg class="w-3.5 h-3.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Encriptación Grado Bancario AES-256
+            </div>
+
+            <!-- Step 1: Select Document and Info -->
+            <div id="step-form" class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">1. Selecciona tu Trámite</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="border-2 border-blue-900 bg-blue-50/20 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition text-center select-option" id="label-csf">
+                            <input type="radio" name="doc_type" value="csf" checked class="hidden" onchange="toggleDocType('csf')">
+                            <span class="font-bold text-slate-950 text-sm">Constancia SAT</span>
+                            <span class="text-[10px] text-slate-500 mt-0.5">$49.00 MXN</span>
+                        </label>
+                        <label class="border border-slate-200 hover:border-blue-900 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition text-center select-option" id="label-opinion">
+                            <input type="radio" name="doc_type" value="opinion" class="hidden" onchange="toggleDocType('opinion')">
+                            <span class="font-bold text-slate-950 text-sm">Opinión 32-D</span>
+                            <span class="text-[10px] text-slate-500 mt-0.5">$49.00 MXN</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2">
+                    <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">2. Datos de Acceso SAT</label>
+                    
+                    <div>
+                        <label class="text-xs text-slate-600 block mb-1">RFC (12 o 13 caracteres)</label>
+                        <input type="text" id="user-rfc" placeholder="e.g. EKU9003173C9" maxlength="13" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-blue-900 focus:bg-white transition uppercase font-mono">
+                    </div>
+                    
+                    <div>
+                        <label class="text-xs text-slate-600 block mb-1">Contraseña SAT (CIEC)</label>
+                        <div class="relative">
+                            <input type="password" id="user-ciec" placeholder="Tu clave de 8 caracteres" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-blue-900 focus:bg-white transition font-mono">
+                            <span class="absolute right-4 top-3 text-slate-400 text-sm" title="Datos encriptados">🔒</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-xs text-slate-600 block mb-1">Correo Electrónico (Para enviar tu PDF)</label>
+                        <input type="email" id="user-email" placeholder="ejemplo@correo.com" class="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-blue-900 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <button onclick="startOrder()" class="w-full py-3.5 bg-blue-900 hover:bg-blue-950 text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-900/10 cursor-pointer block mt-6 text-center">
+                    Continuar al Pago ($49.00 MXN)
+                </button>
+            </div>
+
+            <!-- Step 2: Payment Simulation -->
+            <div id="step-payment" class="space-y-6 hidden text-center py-4">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto text-blue-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Pago Seguro SAT Express</h3>
+                    <p class="text-xs text-slate-400 mt-1">Simulación de pago integrado de Stripe para la demo.</p>
+                </div>
+                
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left font-mono text-xs space-y-2">
+                    <div class="flex justify-between"><span class="text-slate-400">Concepto:</span><span class="text-slate-800 font-bold" id="pay-concept">Descarga Constancia</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Importe:</span><span class="text-emerald-600 font-bold">$49.00 MXN</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">RFC:</span><span class="text-slate-800" id="pay-rfc">EKU9003173C9</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <button onclick="triggerPayment()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-emerald-600/10 cursor-pointer">
+                        Simular Pago Exitoso ($49.00)
+                    </button>
+                    <button onclick="cancelPayment()" class="w-full py-2.5 bg-transparent hover:bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold transition cursor-pointer">
+                        Regresar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Loading Progress -->
+            <div id="step-progress" class="space-y-6 hidden text-center py-6">
+                <!-- Spinner -->
+                <div class="w-14 h-14 border-4 border-slate-200 border-t-blue-900 rounded-full animate-spin mx-auto"></div>
+                
+                <div class="space-y-2">
+                    <h3 class="font-bold text-slate-900 text-base" id="progress-title">Conectando con el SAT...</h3>
+                    <p class="text-xs text-slate-400" id="progress-desc">Iniciando sesión segura en los servidores oficiales.</p>
+                </div>
+                
+                <!-- Simple status bar -->
+                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-blue-900 h-full w-1/4 transition-all duration-700"></div>
+                </div>
+            </div>
+
+            <!-- Step 4: Download Ready -->
+            <div id="step-success" class="space-y-6 hidden text-center py-4">
+                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto text-emerald-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">¡Documento Listo para Descarga!</h3>
+                    <p class="text-xs text-slate-400 mt-1">El robot del SAT obtuvo tu PDF oficial con éxito.</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left font-mono text-xs space-y-2">
+                    <div class="flex justify-between"><span class="text-slate-400">RFC consultado:</span><span class="text-slate-800" id="success-rfc">EKU9003173C9</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Documento:</span><span class="text-slate-800 font-bold" id="success-doc">Constancia Fiscal</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Estatus SAT:</span><span class="text-emerald-600 font-bold">DESCARGADO</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <button onclick="downloadResultPdf()" class="w-full py-3.5 bg-blue-900 hover:bg-blue-950 text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-900/10 cursor-pointer flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Descargar PDF Oficial
+                    </button>
+                    <button onclick="restartFlow()" class="w-full py-2.5 bg-transparent hover:bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold transition cursor-pointer">
+                        Hacer otro trámite
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer / Privacy -->
+        <footer class="mt-8 text-center text-[10px] text-slate-400 space-y-1">
+            <p>SAT Express no tiene relación con el Servicio de Administración Tributaria.</p>
+            <p>Tus datos de acceso (CIEC) se utilizan únicamente para la consulta instantánea y no se almacenan.</p>
+            <p>&copy; 2026 SAT Express. Todos los derechos reservados.</p>
+        </footer>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
