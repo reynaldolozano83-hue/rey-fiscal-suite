@@ -210,72 +210,43 @@ function cancelPayment() {
 async function triggerPayment() {
     if (!currentOrderUuid) return;
     
-    switchScreen("step-payment", "step-progress");
-    
-    try {
-        const res = await fetch(`${API_BASE}/orders/${currentOrderUuid}/trigger-fulfillment`, { method: "GET" });
-        const data = await res.json();
-        if (data.status === 'processing' || data.status === 'success') {
-            startPollingStatus();
-        } else {
-            alert("Error al procesar el pago.");
-            switchScreen("step-progress", "step-payment");
+    // 1. If DIY Mode ($10): Redirect INSTANTLY to the copy-paste assistant
+    if (currentServiceMode === 'diy') {
+        try {
+            await fetch(`${API_BASE}/orders/${currentOrderUuid}/trigger-fulfillment`, { method: "GET" });
+            alert("¡Pago aprobado! Redirigiendo a tu Asistente de Descarga...");
+            window.location.href = `admin.html?search=${encodeURIComponent(currentIdentifier)}`;
+        } catch(e) {
+            console.error(e);
+            alert("Error de conexión.");
         }
+        return;
+    }
+    
+    // 2. If Full Mode ($50): Show the pending receipt screen instantly (no spinner wait)
+    switchScreen("step-payment", "step-progress");
+    try {
+        await fetch(`${API_BASE}/orders/${currentOrderUuid}/trigger-fulfillment`, { method: "GET" });
+        
+        document.getElementById("success-identifier").innerText = currentIdentifier;
+        document.getElementById("success-doc").innerText = document.getElementById("pay-concept").innerText;
+        document.getElementById("success-status").innerText = "PENDIENTE";
+        document.getElementById("success-message").innerText = "Nuestro equipo procesará tu documento en 5 minutos y te lo enviará por WhatsApp.";
+        
+        // Hide download button since we process it manually
+        document.getElementById("btn-success-download").classList.add("hidden");
+        
+        setTimeout(() => {
+            switchScreen("step-progress", "step-success");
+        }, 1000);
     } catch(e) {
         console.error(e);
         switchScreen("step-progress", "step-payment");
     }
 }
 
-let pollInterval = null;
-
-function startPollingStatus() {
-    let progressPercent = 25;
-    const bar = document.getElementById("progress-bar");
-    const title = document.getElementById("progress-title");
-    const desc = document.getElementById("progress-desc");
-    
-    bar.style.width = `${progressPercent}%`;
-    
-    pollInterval = setInterval(async () => {
-        try {
-            const res = await fetch(`${API_BASE}/orders/${currentOrderUuid}/status`);
-            const data = await res.json();
-            
-            if (data.download_status === 'success') {
-                clearInterval(pollInterval);
-                bar.style.width = "100%";
-                
-                if (data.service_mode === 'diy') {
-                    alert("¡Pago aprobado! Redirigiendo a tu Asistente de Descarga...");
-                    window.location.href = `admin.html?search=${encodeURIComponent(currentIdentifier)}`;
-                    return;
-                }
-                
-                title.innerText = "Trámite Recibido!";
-                desc.innerText = "Nuestro equipo procesará tu documento en 5 minutos y te lo enviará por WhatsApp.";
-                
-                setTimeout(() => {
-                    document.getElementById("success-identifier").innerText = currentIdentifier;
-                    document.getElementById("success-doc").innerText = document.getElementById("pay-concept").innerText;
-                    document.getElementById("success-status").innerText = "PENDIENTE";
-                    document.getElementById("success-message").innerText = "Nuestro equipo procesará tu documento en 5 minutos y te lo enviará por WhatsApp.";
-                    
-                    // Hide download button since we process it manually
-                    document.getElementById("btn-success-download").classList.add("hidden");
-                    
-                    switchScreen("step-progress", "step-success");
-                    window.history.replaceState({}, document.title, "/");
-                }, 800);
-            } else {
-                progressPercent = Math.min(progressPercent + 20, 90);
-                bar.style.width = `${progressPercent}%`;
-            }
-        } catch(e) {
-            console.error(e);
-        }
-    }, 1200);
-}
+// Polling removed since we use direct client redirection and manual processing
+function startPollingStatus() {}
 
 function downloadResultPdf() {
     if (!currentOrderUuid) return;
