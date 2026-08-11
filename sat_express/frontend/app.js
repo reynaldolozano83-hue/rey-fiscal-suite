@@ -1,9 +1,40 @@
-// SAT Express Frontend Logic
+// SAT Express Frontend Logic with Stripe Integration
 const API_BASE = window.location.origin + "/api";
 
 let currentOrderUuid = null;
 let currentRfc = "";
 let currentDocType = "csf";
+
+// Handle redirects and success checking on load
+window.onload = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+    const orderUuid = urlParams.get("order_uuid");
+    
+    if (status === "success" && orderUuid) {
+        currentOrderUuid = orderUuid;
+        
+        // Hide initial form, show progress loader screen
+        switchScreen("step-form", "step-progress");
+        
+        // Trigger fulfillment backend logic
+        try {
+            const res = await fetch(`${API_BASE}/orders/${orderUuid}/trigger-fulfillment`);
+            const data = await res.json();
+            
+            // Start polling the download status
+            startPollingStatus();
+        } catch(e) {
+            console.error(e);
+            alert("Error al procesar el pago con el servidor.");
+            switchScreen("step-progress", "step-form");
+        }
+    } else if (status === "cancel") {
+        alert("El pago fue cancelado. Intentalo de nuevo.");
+        // Clear search query parameters
+        window.history.replaceState({}, document.title, "/");
+    }
+};
 
 function toggleDocType(type) {
     currentDocType = type;
@@ -11,11 +42,11 @@ function toggleDocType(type) {
     const opinionLabel = document.getElementById("label-opinion");
     
     if (type === 'csf') {
-        csfLabel.className = "border-2 border-blue-900 bg-blue-50/20 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition text-center select-option";
-        opinionLabel.className = "border border-slate-200 hover:border-blue-900 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition text-center select-option";
+        csfLabel.classList.add("active");
+        opinionLabel.classList.remove("active");
     } else {
-        opinionLabel.className = "border-2 border-blue-900 bg-blue-50/20 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition text-center select-option";
-        csfLabel.className = "border border-slate-200 hover:border-blue-900 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition text-center select-option";
+        opinionLabel.classList.add("active");
+        csfLabel.classList.remove("active");
     }
 }
 
@@ -25,7 +56,7 @@ async function startOrder() {
     const email = document.getElementById("user-email").value.trim();
     
     if (!rfc || rfc.length < 12) {
-        alert("Por favor ingresa un RFC valido de 12 o 13 caracteres.");
+        alert("Por favor ingresa un RFC válido de 12 o 13 caracteres.");
         return;
     }
     if (!ciec) {
@@ -33,13 +64,13 @@ async function startOrder() {
         return;
     }
     if (!email || !email.includes("@")) {
-        alert("Por favor ingresa un correo electronico valido para enviar tu PDF.");
+        alert("Por favor ingresa un correo electrónico válido para enviar tu PDF.");
         return;
     }
     
     currentRfc = rfc.toUpperCase();
     
-    // Create the order on the backend
+    // Create the order on the backend and redirect to Stripe
     try {
         const res = await fetch(`${API_BASE}/orders`, {
             method: "POST",
@@ -51,45 +82,14 @@ async function startOrder() {
         if (data.status === 'success') {
             currentOrderUuid = data.order_uuid;
             
-            // Set payment info
-            document.getElementById("pay-concept").innerText = currentDocType === 'csf' ? "Descarga Constancia SAT" : "Opinión de Cumplimiento 32-D";
-            document.getElementById("pay-rfc").innerText = currentRfc;
-            
-            // Switch screen
-            switchScreen("step-form", "step-payment");
+            // Redirect to Stripe Checkout Session
+            window.location.href = `${API_BASE}/checkout-session/${currentOrderUuid}`;
         } else {
-            alert("Error al iniciar el tramite. Revisa tus datos.");
+            alert("Error al iniciar el trámite. Revisa tus datos.");
         }
     } catch(e) {
         console.error(e);
-        alert("Error de conexion con el servidor.");
-    }
-}
-
-function cancelPayment() {
-    switchScreen("step-payment", "step-form");
-}
-
-async function triggerPayment() {
-    if (!currentOrderUuid) return;
-    
-    switchScreen("step-payment", "step-progress");
-    
-    // Call simulated payment endpoint on backend
-    try {
-        const res = await fetch(`${API_BASE}/orders/${currentOrderUuid}/pay-simulate`, { method: "POST" });
-        const data = await res.json();
-        
-        if (data.status === 'paid') {
-            // Start polling the SAT download progress
-            startPollingStatus();
-        } else {
-            alert("Error al procesar el pago.");
-            switchScreen("step-progress", "step-payment");
-        }
-    } catch(e) {
-        console.error(e);
-        switchScreen("step-progress", "step-payment");
+        alert("Error de conexión con el servidor.");
     }
 }
 
@@ -116,15 +116,19 @@ function startPollingStatus() {
                 
                 setTimeout(() => {
                     // Populate success screen details
-                    document.getElementById("success-rfc").innerText = currentRfc;
+                    document.getElementById("success-rfc").innerText = currentRfc || "Consultado";
                     document.getElementById("success-doc").innerText = currentDocType === 'csf' ? "Constancia de Situación Fiscal" : "Opinión de Cumplimiento 32-D";
                     
                     switchScreen("step-progress", "step-success");
+                    
+                    // Clear search parameters from address bar cleanly
+                    window.history.replaceState({}, document.title, "/");
                 }, 800);
             } else if (data.download_status === 'failed') {
                 clearInterval(pollInterval);
                 alert("Error de consulta SAT: " + (data.error_message || "La contraseña o el RFC son incorrectos. Por favor, verifica tus datos de acceso en el SAT."));
                 switchScreen("step-progress", "step-form");
+                window.history.replaceState({}, document.title, "/");
             } else {
                 // Increment visual status bar
                 progressPercent = Math.min(progressPercent + 20, 90);
