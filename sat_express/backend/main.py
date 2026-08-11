@@ -109,7 +109,7 @@ def create_checkout_session(order_uuid: str):
                         'name': f"{doc_name} (SAT)",
                         'description': f"Trámite express para el RFC: {order['rfc']}",
                     },
-                    'unit_amount': 4900, # $49.00 MXN in cents
+                    'unit_amount': 7900, # $49.00 MXN in cents
                 },
                 'quantity': 1,
             }],
