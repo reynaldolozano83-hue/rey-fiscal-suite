@@ -3,9 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trámite Express - Descarga tus documentos oficiales al instante</title>
+    <title>Trámite Express - Gestoría Semiautomática de Trámites Oficiales</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .grid-options-8 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+        
+        .mode-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .checkbox-container input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+    </style>
 </head>
 <body>
 
@@ -29,7 +60,7 @@
         <!-- Welcome Hero -->
         <div class="hero" id="hero-header">
             <h1>Obtén tus documentos oficiales en 1 minuto</h1>
-            <p>Descarga directa en PDF oficial de forma fácil, segura y 100% en línea.</p>
+            <p>Descarga directa de forma fácil, segura y 100% en línea.</p>
         </div>
 
         <!-- Wizard Card -->
@@ -45,26 +76,38 @@
             <div id="step-form" class="step-container">
                 <div class="form-group">
                     <label class="group-title">1. Selecciona tu Trámite</label>
-                    <div class="grid-options-4">
+                    <div class="grid-options-8">
                         <label class="select-option active" id="label-csf">
                             <input type="radio" name="doc_type" value="csf" checked onchange="toggleDocType('csf')">
                             <span class="option-title">Constancia SAT</span>
-                            
                         </label>
                         <label class="select-option" id="label-opinion">
                             <input type="radio" name="doc_type" value="opinion" onchange="toggleDocType('opinion')">
                             <span class="option-title">Opinión SAT 32D</span>
-                            
                         </label>
                         <label class="select-option" id="label-nss">
                             <input type="radio" name="doc_type" value="nss" onchange="toggleDocType('nss')">
-                            <span class="option-title">Número Seguro (NSS)</span>
-                            
+                            <span class="option-title">Número Seguro IMSS</span>
                         </label>
                         <label class="select-option" id="label-curp">
                             <input type="radio" name="doc_type" value="curp" onchange="toggleDocType('curp')">
                             <span class="option-title">CURP Oficial</span>
-                            
+                        </label>
+                        <label class="select-option" id="label-acta">
+                            <input type="radio" name="doc_type" value="acta" onchange="toggleDocType('acta')">
+                            <span class="option-title">Acta de Nacimiento</span>
+                        </label>
+                        <label class="select-option" id="label-penales">
+                            <input type="radio" name="doc_type" value="penales" onchange="toggleDocType('penales')">
+                            <span class="option-title">Antecedentes Penales</span>
+                        </label>
+                        <label class="select-option" id="label-cfe">
+                            <input type="radio" name="doc_type" value="cfe" onchange="toggleDocType('cfe')">
+                            <span class="option-title">Recibo CFE / Gas</span>
+                        </label>
+                        <label class="select-option" id="label-citas">
+                            <input type="radio" name="doc_type" value="citas" onchange="toggleDocType('citas')">
+                            <span class="option-title">Cita INE / SAT</span>
                         </label>
                     </div>
                 </div>
@@ -72,7 +115,7 @@
                 <div class="form-group">
                     <label class="group-title">2. Datos del Trámite</label>
                     
-                    <!-- Dynamic SAT Fields -->
+                    <!-- Dynamic SAT Fields (RFC & CIEC) -->
                     <div id="sat-fields" class="space-y-4">
                         <div class="input-field">
                             <label>RFC (12 o 13 caracteres)</label>
@@ -82,27 +125,81 @@
                             <label>Contraseña SAT (CIEC)</label>
                             <div class="password-wrapper">
                                 <input type="password" id="user-ciec" placeholder="Tu clave de 8 caracteres" class="input-text font-mono">
-                                <span class="lock-icon">🔒</span>
+                                <span class="lock-icon"></span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Dynamic CURP / NSS Fields (Hidden by default, shown for NSS/CURP) -->
-                    <div id="curp-fields" class="input-field hidden">
-                        <label>CURP (18 caracteres)</label>
-                        <input type="text" id="user-curp" placeholder="e.g. LOZR831024HDFLNR09" maxlength="18" class="input-text uppercase font-mono">
+                    <!-- Dynamic CURP Fields -->
+                    <div id="curp-container" class="space-y-4 hidden">
+                        <div class="input-field" id="field-curp-input">
+                            <label>CURP (18 caracteres)</label>
+                            <input type="text" id="user-curp" placeholder="e.g. LOZR831024HDFLNR09" maxlength="18" class="input-text uppercase font-mono">
+                        </div>
+                        
+                        <!-- Checkbox "I don't know my CURP" -->
+                        <label class="checkbox-container" id="no-curp-toggle">
+                            <input type="checkbox" id="chk-no-curp" onchange="toggleNoCurpFields()">
+                            No me sé mi CURP (Buscar por datos personales)
+                        </label>
+
+                        <!-- Personal details search (hidden by default) -->
+                        <div id="personal-fields" class="space-y-4 hidden" style="border-left: 2px solid var(--accent); padding-left: 15px; margin-top: 10px;">
+                            <div class="input-field">
+                                <label>Nombre(s)</label>
+                                <input type="text" id="user-name" placeholder="Nombre completo" class="input-text uppercase">
+                            </div>
+                            <div class="input-field">
+                                <label>Primer Apellido</label>
+                                <input type="text" id="user-paterno" placeholder="Apellido paterno" class="input-text uppercase">
+                            </div>
+                            <div class="input-field">
+                                <label>Segundo Apellido</label>
+                                <input type="text" id="user-materno" placeholder="Apellido materno" class="input-text uppercase">
+                            </div>
+                            <div class="grid-options-2" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                                <div class="input-field">
+                                    <label>Fecha de Nacimiento</label>
+                                    <input type="date" id="user-birthdate" class="input-text">
+                                </div>
+                                <div class="input-field">
+                                    <label>Sexo</label>
+                                    <select id="user-gender" class="input-text" style="height:48px; border-radius:8px; border:1px solid var(--border); padding:0 12px; background:var(--white);">
+                                        <option value="H">Hombre</option>
+                                        <option value="M">Mujer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="input-field">
+                                <label>Estado de Nacimiento</label>
+                                <select id="user-state" class="input-text" style="height:48px; border-radius:8px; border:1px solid var(--border); padding:0 12px; background:var(--white);">
+                                    <option value="SL">San Luis Potosí</option>
+                                    <option value="DF">Ciudad de México</option>
+                                    <option value="NE">Nuevo León</option>
+                                    <option value="MX">Estado de México</option>
+                                    <option value="GT">Guanajuato</option>
+                                    <option value="JC">Jalisco</option>
+                                    <option value="PU">Puebla</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Utility Bill Fields (CFE/Gas) -->
+                    <div id="utility-fields" class="input-field hidden">
+                        <label>Número de Servicio (12 dígitos en tu recibo)</label>
+                        <input type="text" id="user-utility" placeholder="e.g. 102938475610" maxlength="12" class="input-text font-mono">
                     </div>
                     
-                    <div class="input-field">
+                    <div class="input-field" style="margin-top: 15px;">
                         <label>WhatsApp o Correo Electrónico (Para recibir tu PDF)</label>
                         <input type="text" id="user-delivery" placeholder="Celular a 10 dígitos o correo" class="input-text">
                     </div>
                 </div>
 
-                
                 <div class="form-group">
                     <label class="group-title">3. Selecciona la Modalidad</label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                    <div class="mode-container">
                         <label class="select-option active" id="label-mode-diy" style="padding: 12px; border-radius: 8px; border: 2px solid #10b981; cursor: pointer; text-align: center; display: flex; flex-direction: column; gap: 4px;">
                             <input type="radio" name="service_mode" value="diy" checked onchange="toggleServiceMode('diy')">
                             <span style="font-weight: 700; font-size: 14px;">Hazlo tú mismo</span>
@@ -118,8 +215,8 @@
                     </div>
                 </div>
 
-                <button onclick="startOrder()" class="btn btn-primary" id="btn-submit-order">
-                    Continuar al Pago ($79.00 MXN)
+                <button onclick="startOrder()" class="btn btn-primary" id="btn-submit-order" style="margin-top: 20px;">
+                    Continuar al Pago ($10.00 MXN)
                 </button>
             </div>
 
@@ -135,13 +232,13 @@
                 
                 <div class="summary-box font-mono">
                     <div class="summary-row"><span class="label">Concepto:</span><span class="val font-bold" id="pay-concept">Descarga Constancia</span></div>
-                    <div class="summary-row"><span class="label">Importe:</span><span class="val text-emerald font-bold" id="pay-amount">$79.00 MXN</span></div>
+                    <div class="summary-row"><span class="label">Importe:</span><span class="val text-emerald font-bold" id="pay-amount">$10.00 MXN</span></div>
                     <div class="summary-row"><span class="label">Identificador:</span><span class="val" id="pay-identifier">EKU9003173C9</span></div>
                 </div>
 
                 <div class="action-buttons">
                     <button onclick="triggerPayment()" class="btn btn-success" id="btn-pay-simulate">
-                        Simular Pago Exitoso ($79.00)
+                        Simular Pago Exitoso
                     </button>
                     <button onclick="cancelPayment()" class="btn btn-link">
                         Regresar
@@ -154,8 +251,8 @@
                 <div class="spinner"></div>
                 
                 <div class="step-header">
-                    <h3 id="progress-title">Conectando con el Servidor...</h3>
-                    <p id="progress-desc">Iniciando sesión segura en los servidores oficiales.</p>
+                    <h3 id="progress-title">Procesando Solicitud...</h3>
+                    <p id="progress-desc">Guardando tus datos fiscales de forma encriptada.</p>
                 </div>
                 
                 <div class="progress-track">
@@ -169,18 +266,18 @@
                     <svg class="icon-large" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </div>
                 <div class="step-header">
-                    <h3>¡Documento Listo para Descarga!</h3>
-                    <p>El robot oficial obtuvo tu PDF con éxito.</p>
+                    <h3>Solicitud Recibida con Éxito!</h3>
+                    <p id="success-message">Nuestro equipo procesará tu documento en 5 minutos y te lo enviará por WhatsApp.</p>
                 </div>
 
                 <div class="summary-box font-mono">
                     <div class="summary-row"><span class="label">Identificador:</span><span class="val" id="success-identifier">EKU9003173C9</span></div>
                     <div class="summary-row"><span class="label">Documento:</span><span class="val font-bold" id="success-doc">Constancia Fiscal</span></div>
-                    <div class="summary-row"><span class="label">Estatus:</span><span class="val text-emerald font-bold">DESCARGADO</span></div>
+                    <div class="summary-row"><span class="label">Estatus:</span><span class="val text-emerald font-bold" id="success-status">PENDIENTE</span></div>
                 </div>
 
                 <div class="action-buttons">
-                    <button onclick="downloadResultPdf()" class="btn btn-primary btn-icon">
+                    <button onclick="downloadResultPdf()" class="btn btn-primary btn-icon" id="btn-success-download">
                         <svg class="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         Descargar PDF Oficial
                     </button>
@@ -194,7 +291,7 @@
 
         <!-- Footer / Privacy -->
         <footer class="footer">
-            <p>Trámite Express es una gestoría independiente y no tiene relación afiliativa con dependencias de gobierno.</p>
+            <p>Trámite Express es una gestora independiente y no tiene relación afiliativa con dependencias de gobierno.</p>
             <p>Tus datos se utilizan únicamente para la descarga instantánea y no se comercializan.</p>
             <p>&copy; 2026 Trámite Express. Todos los derechos reservados.</p>
         </footer>

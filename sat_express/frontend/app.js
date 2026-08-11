@@ -2,10 +2,10 @@
 const API_BASE = window.location.origin + "/api";
 
 let currentOrderUuid = null;
-let currentIdentifier = ""; // Stores RFC or CURP
+let currentIdentifier = ""; 
 let currentDocType = "csf";
 let currentPrice = 10;
-let currentServiceMode = 'diy';
+let currentServiceMode = "diy";
 
 window.onload = async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -30,12 +30,10 @@ window.onload = async () => {
     }
 };
 
-
 function toggleServiceMode(mode) {
     currentServiceMode = mode;
     currentPrice = (mode === 'diy') ? 10 : 50;
     
-    // Toggle active borders in UI
     const labelDiy = document.getElementById("label-mode-diy");
     const labelFull = document.getElementById("label-mode-full");
     
@@ -55,41 +53,54 @@ function toggleDocType(type) {
     currentDocType = type;
     
     // Reset active classes
-    const labels = ["csf", "opinion", "nss", "curp"];
+    const labels = ["csf", "opinion", "nss", "curp", "acta", "penales", "cfe", "citas"];
     labels.forEach(l => {
         const lbl = document.getElementById(`label-${l}`);
-        if (l === type) {
-            lbl.classList.add("active");
-        } else {
-            lbl.classList.remove("active");
+        if (lbl) {
+            if (l === type) {
+                lbl.classList.add("active");
+            } else {
+                lbl.classList.remove("active");
+            }
         }
     });
 
     // Toggle fields based on type
     const satFields = document.getElementById("sat-fields");
-    const curpFields = document.getElementById("curp-fields");
-    const submitBtn = document.getElementById("btn-submit-order");
+    const curpContainer = document.getElementById("curp-container");
+    const utilityFields = document.getElementById("utility-fields");
     
+    // Hide all first
+    satFields.classList.add("hidden");
+    curpContainer.classList.add("hidden");
+    utilityFields.classList.add("hidden");
+
     if (type === 'csf' || type === 'opinion') {
         satFields.classList.remove("hidden");
-        curpFields.classList.add("hidden");
-        
-    } else if (type === 'nss') {
-        satFields.classList.add("hidden");
-        curpFields.classList.remove("hidden");
-        
-    } else if (type === 'curp') {
-        satFields.classList.add("hidden");
-        curpFields.classList.remove("hidden");
-        
+    } else if (type === 'cfe') {
+        utilityFields.classList.remove("hidden");
+    } else {
+        // CURP, NSS, Acta, Penales, Citas
+        curpContainer.classList.remove("hidden");
     }
+}
 
-    submitBtn.innerText = `Continuar al Pago ($${currentPrice}.00 MXN)`;
+function toggleNoCurpFields() {
+    const chk = document.getElementById("chk-no-curp");
+    const curpInput = document.getElementById("field-curp-input");
+    const personalFields = document.getElementById("personal-fields");
+    
+    if (chk.checked) {
+        curpInput.classList.add("hidden");
+        personalFields.classList.remove("hidden");
+    } else {
+        curpInput.classList.remove("hidden");
+        personalFields.classList.add("hidden");
+    }
 }
 
 async function startOrder() {
     const delivery = document.getElementById("user-delivery").value.trim();
-    
     if (!delivery) {
         alert("Por favor ingresa tu celular o correo electrónico para enviarte tu PDF.");
         return;
@@ -101,6 +112,7 @@ async function startOrder() {
         service_mode: currentServiceMode
     };
 
+    // Extract dynamic identifier based on visible fields
     if (currentDocType === 'csf' || currentDocType === 'opinion') {
         const rfc = document.getElementById("user-rfc").value.trim();
         const ciec = document.getElementById("user-ciec").value.trim();
@@ -113,18 +125,45 @@ async function startOrder() {
             alert("Por favor ingresa tu contraseña SAT (CIEC).");
             return;
         }
-        
         currentIdentifier = rfc.toUpperCase();
         payload.rfc = currentIdentifier;
         payload.ciec = ciec;
-    } else {
-        const curp = document.getElementById("user-curp").value.trim();
-        if (!curp || curp.length < 18) {
-            alert("Por favor ingresa tu CURP oficial de 18 caracteres.");
+    } else if (currentDocType === 'cfe') {
+        const utility = document.getElementById("user-utility").value.trim();
+        if (!utility || utility.length < 10) {
+            alert("Por favor ingresa tu Número de Servicio de 12 dígitos.");
             return;
         }
-        currentIdentifier = curp.toUpperCase();
-        payload.curp = currentIdentifier;
+        currentIdentifier = utility;
+        payload.curp = currentIdentifier; // backend expects identifier here
+    } else {
+        const isManual = document.getElementById("chk-no-curp").checked;
+        if (isManual) {
+            const name = document.getElementById("user-name").value.trim();
+            const paterno = document.getElementById("user-paterno").value.trim();
+            const materno = document.getElementById("user-materno").value.trim();
+            const birthdate = document.getElementById("user-birthdate").value;
+            const gender = document.getElementById("user-gender").value;
+            const state = document.getElementById("user-state").value;
+            
+            if (!name || !paterno || !birthdate) {
+                alert("Por favor ingresa Nombre, Apellido Paterno y Fecha de Nacimiento.");
+                return;
+            }
+            
+            // Build pseudo identifier from names for tracking
+            currentIdentifier = `${paterno.substring(0,2)}${materno.substring(0,1)}${name.substring(0,1)}${birthdate.replace(/-/g,'').substring(2)}`.toUpperCase();
+            payload.curp = currentIdentifier;
+            payload.ciec = `DATOS: ${name} ${paterno} ${materno} | ${birthdate} | ${gender} | ${state}`;
+        } else {
+            const curp = document.getElementById("user-curp").value.trim();
+            if (!curp || curp.length < 18) {
+                alert("Por favor ingresa tu CURP oficial de 18 caracteres.");
+                return;
+            }
+            currentIdentifier = curp.toUpperCase();
+            payload.curp = currentIdentifier;
+        }
     }
     
     try {
@@ -138,13 +177,18 @@ async function startOrder() {
         if (data.status === 'success') {
             currentOrderUuid = data.order_uuid;
             
-            // Set payment info
-            let docName = "Constancia SAT";
-            if (currentDocType === 'opinion') docName = "Opinión SAT 32D";
-            else if (currentDocType === 'nss') docName = "Número de Seguro Social (NSS)";
-            else if (currentDocType === 'curp') docName = "CURP Oficial";
+            const docNames = {
+                'csf': 'Constancia SAT',
+                'opinion': 'Opinión SAT 32D',
+                'nss': 'Número Seguro IMSS',
+                'curp': 'CURP Oficial',
+                'acta': 'Acta de Nacimiento',
+                'penales': 'Antecedentes Penales',
+                'cfe': 'Recibo CFE / Luz',
+                'citas': 'Cita Oficial'
+            };
 
-            document.getElementById("pay-concept").innerText = docName;
+            document.getElementById("pay-concept").innerText = docNames[currentDocType] || "Trámite Express";
             document.getElementById("pay-amount").innerText = `$${currentPrice}.00 MXN`;
             document.getElementById("pay-identifier").innerText = currentIdentifier;
             document.getElementById("btn-pay-simulate").innerText = `Simular Pago Exitoso ($${currentPrice}.00)`;
@@ -201,40 +245,31 @@ function startPollingStatus() {
             if (data.download_status === 'success') {
                 clearInterval(pollInterval);
                 bar.style.width = "100%";
-                title.innerText = "¡Trámite Listo!";
-                desc.innerText = "Documento obtenido con éxito.";
+                
+                if (data.service_mode === 'diy') {
+                    alert("¡Pago aprobado! Redirigiendo a tu Asistente de Descarga...");
+                    window.location.href = `admin.html?search=${encodeURIComponent(currentIdentifier)}`;
+                    return;
+                }
+                
+                title.innerText = "Trámite Recibido!";
+                desc.innerText = "Nuestro equipo procesará tu documento en 5 minutos y te lo enviará por WhatsApp.";
                 
                 setTimeout(() => {
-                    document.getElementById("success-identifier").innerText = currentIdentifier || "Consultado";
+                    document.getElementById("success-identifier").innerText = currentIdentifier;
+                    document.getElementById("success-doc").innerText = document.getElementById("pay-concept").innerText;
+                    document.getElementById("success-status").innerText = "PENDIENTE";
+                    document.getElementById("success-message").innerText = "Nuestro equipo procesará tu documento en 5 minutos y te lo enviará por WhatsApp.";
                     
-                    let docName = "Constancia SAT";
-                    if (currentDocType === 'opinion') docName = "Opinión SAT 32D";
-                    else if (currentDocType === 'nss') docName = "Número de Seguro Social (NSS)";
-                    else if (currentDocType === 'curp') docName = "CURP Oficial";
-                    document.getElementById("success-doc").innerText = docName;
+                    // Hide download button since we process it manually
+                    document.getElementById("btn-success-download").classList.add("hidden");
                     
                     switchScreen("step-progress", "step-success");
                     window.history.replaceState({}, document.title, "/");
                 }, 800);
-            } else if (data.download_status === 'failed') {
-                clearInterval(pollInterval);
-                alert("Error de consulta: " + (data.error_message || "No se pudo obtener el documento. Verifica los datos de acceso proporcionados."));
-                switchScreen("step-progress", "step-form");
-                window.history.replaceState({}, document.title, "/");
             } else {
                 progressPercent = Math.min(progressPercent + 20, 90);
                 bar.style.width = `${progressPercent}%`;
-                
-                if (progressPercent === 45) {
-                    title.innerText = "Conectando al Servidor Oficial...";
-                    desc.innerText = "Iniciando sesión segura en las dependencias federales.";
-                } else if (progressPercent === 65) {
-                    title.innerText = "Validando identidad...";
-                    desc.innerText = "Resolviendo la autenticación y CAPTCHA del portal.";
-                } else if (progressPercent === 85) {
-                    title.innerText = "Generando PDF oficial...";
-                    desc.innerText = "Obteniendo los archivos encriptados en formato PDF.";
-                }
             }
         } catch(e) {
             console.error(e);
@@ -253,6 +288,9 @@ function restartFlow() {
     document.getElementById("user-ciec").value = "";
     document.getElementById("user-curp").value = "";
     document.getElementById("user-delivery").value = "";
+    document.getElementById("user-utility").value = "";
+    document.getElementById("chk-no-curp").checked = false;
+    toggleNoCurpFields();
     switchScreen("step-success", "step-form");
 }
 
