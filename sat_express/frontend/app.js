@@ -213,9 +213,9 @@ async function triggerPayment() {
     switchScreen("step-payment", "step-progress");
     
     try {
-        const res = await fetch(`${API_BASE}/orders/${currentOrderUuid}/pay-simulate`, { method: "POST" });
+        const res = await fetch(`${API_BASE}/orders/${currentOrderUuid}/trigger-fulfillment`, { method: "GET" });
         const data = await res.json();
-        if (data.status === 'paid') {
+        if (data.status === 'processing' || data.status === 'success') {
             startPollingStatus();
         } else {
             alert("Error al procesar el pago.");
