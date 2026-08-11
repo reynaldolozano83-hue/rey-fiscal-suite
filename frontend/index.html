@@ -97,6 +97,10 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                         <span>Inventarios</span>
                     </button>
+                    <button onclick="switchTab('compliance-center')" id="btn-compliance-center" class="nav-btn flex items-center gap-3 w-full px-4 py-3 rounded-xl transition duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <span>Estatus SAT (32-D)</span>
+                    </button>
                 </nav>
             </div>
 
@@ -552,6 +556,74 @@
                                 </tr>
                             </thead>
                             <tbody id="inventory-list-table">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            <section id="tab-compliance-center" class="tab-content hidden space-y-6">
+                <div class="glass-card p-6 space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold">Estatus SAT & Opinión de Cumplimiento (32-D)</h3>
+                            <p class="text-xs text-slate-400 mt-1">Descarga automática de Constancias de Situación Fiscal y Opiniones 32-D en tiempo real.</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-[10px] text-greenNeon bg-greenNeon/10 border border-greenNeon/20 px-3 py-1.5 rounded-lg font-mono">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Conexión SAT Encriptada AES-256
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-300 font-mono">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-slate-400 text-xs">
+                                    <th class="py-3 px-4">Contribuyente</th>
+                                    <th class="py-3 px-4">RFC</th>
+                                    <th class="py-3 px-4">Clave CIEC</th>
+                                    <th class="py-3 px-4 text-center">Opinión 32-D</th>
+                                    <th class="py-3 px-4 text-center">Trámites SAT (1-Clic)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-slate-800 hover:bg-slate-900/40 transition">
+                                    <td class="py-3 px-4 text-white font-bold text-xs">PYME ACME DE MEXICO SA DE CV</td>
+                                    <td class="py-3 px-4 text-xs font-mono text-slate-400">EKU9003173C9</td>
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center gap-2">
+                                            <input type="password" value="PymeAcme2026*" disabled class="bg-slate-950/40 border border-slate-800 rounded px-2 py-0.5 text-xs text-slate-500 w-28 text-center font-mono">
+                                            <span class="text-green-500 text-[10px]" title="Encriptado seguro">🔒</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="px-2 py-0.5 bg-greenNeon/10 border border-greenNeon/30 text-greenNeon text-[10px] font-bold rounded">Positiva (Vigente)</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <div class="flex justify-center gap-2">
+                                            <button onclick="downloadSatDoc('EKU9003173C9', 'csf')" id="btn-csf-EKU9003173C9" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 rounded border border-slate-700 transition cursor-pointer">CSF (PDF)</button>
+                                            <button onclick="downloadSatDoc('EKU9003173C9', 'opinion')" id="btn-op-EKU9003173C9" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 rounded border border-slate-700 transition cursor-pointer">Opinión 32-D</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-slate-800 hover:bg-slate-900/40 transition">
+                                    <td class="py-3 px-4 text-white font-bold text-xs">MOCK SIMULACIONES OPERATIVAS SA DE CV</td>
+                                    <td class="py-3 px-4 text-xs font-mono text-slate-400">MSO1205047A1</td>
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center gap-2">
+                                            <input type="password" value="MsoOper123*" disabled class="bg-slate-950/40 border border-slate-800 rounded px-2 py-0.5 text-xs text-slate-500 w-28 text-center font-mono">
+                                            <span class="text-green-500 text-[10px]">🔒</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="px-2 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-bold rounded">Negativa (Incumplido)</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <div class="flex justify-center gap-2">
+                                            <button onclick="downloadSatDoc('MSO1205047A1', 'csf')" id="btn-csf-MSO1205047A1" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 rounded border border-slate-700 transition cursor-pointer">CSF (PDF)</button>
+                                            <button onclick="downloadSatDoc('MSO1205047A1', 'opinion')" id="btn-op-MSO1205047A1" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 rounded border border-slate-700 transition cursor-pointer">Opinión 32-D</button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
