@@ -113,7 +113,7 @@ def create_checkout_session(order_uuid: str):
     
     try:
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
+            payment_method_types=['card', 'oxxo'],
             line_items=[{
                 'price_data': {
                     'currency': 'mxn',
