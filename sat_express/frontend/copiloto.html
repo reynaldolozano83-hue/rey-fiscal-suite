@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copiloto de Trámites Express - INE / IMSS / SAT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #10b981;
+            --accent-light: #d1fae5;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--primary);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            height: 100%;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px 0;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: var(--primary-light);
+        }
+
+        .menu-item.active {
+            background: var(--primary-light);
+            border-left: 4px solid var(--accent);
+        }
+
+        .menu-price {
+            font-size: 12px;
+            background: var(--accent-light);
+            color: #065f46;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Main Workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .workspace-header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        .workspace-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 25px;
+            align-items: start;
+        }
+
+        /* Forms Card */
+        .card-form {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .form-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .input-field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-text {
+            flex: 1;
+            height: 48px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 0 15px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .input-text:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-copy {
+            background: var(--accent-light);
+            color: #065f46;
+            border: none;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .btn-gov {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #2563eb;
+            color: var(--white);
+            border: none;
+            height: 48px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .btn-gov:hover {
+            background: #1d4ed8;
+        }
+
+        /* Cost Calculator Card */
+        .card-calc {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .calc-total {
+            border-top: 2px solid var(--border);
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            color: var(--primary);
+        }
+
+        .copies-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-light);
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-circle:hover {
+            background: #e2e8f0;
+        }
+
+        .state-select {
+            width: 100%;
+            height: 38px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            padding: 0 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            ⚡ Copiloto Trámite Express
+        </div>
+        <ul class="sidebar-menu">
+            <li class="menu-item active" onclick="switchTab('curp')" id="tab-curp">
+                <span>🪪 CURP Oficial</span>
+                <span class="menu-price">$20</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('acta')" id="tab-acta">
+                <span>📜 Acta de Nacimiento</span>
+                <span class="menu-price">$158</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('nss')" id="tab-nss">
+                <span>🏥 Número Seguro IMSS</span>
+                <span class="menu-price">$50</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('csf')" id="tab-csf">
+                <span>📄 Constancia Fiscal SAT</span>
+                <span class="menu-price">$50</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('cfe')" id="tab-cfe">
+                <span>🖨️ Recibo CFE / Luz</span>
+                <span class="menu-price">$30</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('penales')" id="tab-penales">
+                <span>⚖️ Antecedentes Penales</span>
+                <span class="menu-price">$50</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('cita_ine')" id="tab-cita_ine">
+                <span>🗳️ Citas del INE</span>
+                <span class="menu-price">$50</span>
+            </li>
+            <li class="menu-item" onclick="switchTab('cita_sat')" id="tab-cita_sat">
+                <span>🔑 Citas del SAT</span>
+                <span class="menu-price">$50</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+        <div class="workspace-header">
+            <div class="workspace-title" id="title-display">Trámite: CURP Oficial</div>
+            <div style="font-size:14px; font-weight:600; color:var(--accent);">🟢 Modo Offline Operativo</div>
+        </div>
+
+        <div class="card-container">
+            <!-- Form Workspace Card -->
+            <div class="card-form">
+                <div class="form-title" id="form-subtitle">Llenado de Datos del Cliente</div>
+                
+                <div class="input-field-group">
+                    <!-- Standard CURP input -->
+                    <div class="input-item" id="block-curp">
+                        <label>CURP (18 caracteres)</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="val-curp" placeholder="e.g. LOZR831024HDFLNR09" class="input-text" style="text-transform: uppercase;">
+                            <button class="btn-copy" onclick="copyValue('val-curp')">Copiar</button>
+                        </div>
+                    </div>
+
+                    <!-- Personal details search inputs (for searches without CURP / Actas) -->
+                    <div id="block-name-details" class="hidden" style="border-left: 3px solid var(--accent); padding-left: 15px; display:flex; flex-direction:column; gap:12px;">
+                        <div class="input-item">
+                            <label>Nombre(s)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="val-name" placeholder="Nombre completo" class="input-text" style="text-transform: uppercase;">
+                                <button class="btn-copy" onclick="copyValue('val-name')">Copiar</button>
+                            </div>
+                        </div>
+                        <div class="input-item">
+                            <label>Primer Apellido (Paterno)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="val-paterno" placeholder="Apellido paterno" class="input-text" style="text-transform: uppercase;">
+                                <button class="btn-copy" onclick="copyValue('val-paterno')">Copiar</button>
+                            </div>
+                        </div>
+                        <div class="input-item">
+                            <label>Segundo Apellido (Materno)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="val-materno" placeholder="Apellido materno" class="input-text" style="text-transform: uppercase;">
+                                <button class="btn-copy" onclick="copyValue('val-materno')">Copiar</button>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div class="input-item">
+                                <label>Fecha de Nacimiento</label>
+                                <div class="input-wrapper">
+                                    <input type="date" id="val-birthdate" class="input-text">
+                                    <button class="btn-copy" onclick="copyValue('val-birthdate')">Copiar</button>
+                                </div>
+                            </div>
+                            <div class="input-item">
+                                <label>Sexo</label>
+                                <div class="input-wrapper">
+                                    <select id="val-gender" class="input-text" style="height:48px;">
+                                        <option value="H">Hombre</option>
+                                        <option value="M">Mujer</option>
+                                    </select>
+                                    <button class="btn-copy" onclick="copyValue('val-gender')">Copiar</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-item">
+                            <label>Estado de Nacimiento</label>
+                            <div class="input-wrapper">
+                                <select id="val-state" class="input-text" style="height:48px;">
+                                    <option value="SL">San Luis Potosí</option>
+                                    <option value="DF">Ciudad de México</option>
+                                    <option value="NE">Nuevo León</option>
+                                    <option value="MX">Estado de México</option>
+                                    <option value="GT">Guanajuato</option>
+                                    <option value="JC">Jalisco</option>
+                                    <option value="PU">Puebla</option>
+                                </select>
+                                <button class="btn-copy" onclick="copyValue('val-state')">Copiar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RFC/CIEC for SAT -->
+                    <div id="block-sat" class="hidden" style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="input-item">
+                            <label>RFC (12 o 13 caracteres)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="val-rfc" placeholder="e.g. EKU9003173C9" class="input-text" style="text-transform: uppercase;">
+                                <button class="btn-copy" onclick="copyValue('val-rfc')">Copiar</button>
+                            </div>
+                        </div>
+                        <div class="input-item">
+                            <label>Contraseña SAT (CIEC)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="val-ciec" placeholder="Tu clave de 8 caracteres" class="input-text">
+                                <button class="btn-copy" onclick="copyValue('val-ciec')">Copiar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Utility Service Number -->
+                    <div id="block-utility" class="hidden">
+                        <div class="input-item">
+                            <label>Número de Servicio CFE / Luz (12 dígitos)</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="val-utility" placeholder="e.g. 102938475610" class="input-text">
+                                <button class="btn-copy" onclick="copyValue('val-utility')">Copiar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- General Delivery (Email/Phone) -->
+                    <div class="input-item">
+                        <label>WhatsApp / Correo del Cliente</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="val-delivery" placeholder="Celular o correo del cliente" class="input-text">
+                            <button class="btn-copy" onclick="copyValue('val-delivery')">Copiar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Open Official Portal Button -->
+                <a href="https://www.gob.mx/curp/" target="_blank" class="btn-gov" id="btn-portal">
+                    🌐 Abrir Portal Oficial del Gobierno
+                </a>
+            </div>
+
+            <!-- Cost Calculator Card -->
+            <div class="card-calc">
+                <div class="form-title">Calculadora de Cobro</div>
+                
+                <!-- State Selection for Actas -->
+                <div id="state-price-block" class="hidden" style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-light);">Estado del Acta (Costo oficial):</label>
+                    <select id="state-price-select" class="state-select" onchange="calculateTotal()">
+                        <option value="108">San Luis Potosí ($108)</option>
+                        <option value="90">Ciudad de México ($90)</option>
+                        <option value="60">Nuevo León ($60)</option>
+                        <option value="60">Estado de México ($60)</option>
+                        <option value="90">Guanajuato ($90)</option>
+                        <option value="110">Jalisco ($110)</option>
+                        <option value="140">Veracruz ($140)</option>
+                    </select>
+                </div>
+
+                <div class="calc-row">
+                    <span>Derechos Oficiales:</span>
+                    <span id="calc-rights">$0.00 MXN</span>
+                </div>
+                <div class="calc-row">
+                    <span>Nuestra Comisión:</span>
+                    <span id="calc-comm">$20.00 MXN</span>
+                </div>
+                
+                <!-- Photocopies Counter -->
+                <div class="calc-row" style="border-top:1px dashed var(--border); padding-top:10px; margin-top:10px;">
+                    <span>Fotocopias ($5 c/u):</span>
+                    <div class="copies-controls">
+                        <div class="btn-circle" onclick="adjustCopies(-1)">-</div>
+                        <span id="copies-count" style="font-weight:700;">0</span>
+                        <div class="btn-circle" onclick="adjustCopies(1)">+</div>
+                    </div>
+                </div>
+
+                <div class="calc-total">
+                    <span>Total a Cobrar:</span>
+                    <span id="calc-total-amount">$20.00 MXN</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'curp';
+        let copiesCount = 0;
+
+        const tabData = {
+            'curp': {
+                title: 'Trámite: CURP Oficial',
+                rights: 0,
+                commission: 20,
+                url: 'https://www.gob.mx/curp/',
+                showCurp: true,
+                showNameDetails: true,
+                showSat: false,
+                showUtility: false,
+                showStateSelect: false
+            },
+            'acta': {
+                title: 'Trámite: Acta de Nacimiento',
+                rights: 108, // Dynamic based on state select
+                commission: 50,
+                url: 'https://www.gob.mx/ActaNacimiento/',
+                showCurp: true,
+                showNameDetails: true,
+                showSat: false,
+                showUtility: false,
+                showStateSelect: true
+            },
+            'nss': {
+                title: 'Trámite: Número Seguro IMSS',
+                rights: 0,
+                commission: 50,
+                url: 'https://serviciosdigitales.imss.gob.mx/portal-web-external-ui/nss',
+                showCurp: true,
+                showNameDetails: false,
+                showSat: false,
+                showUtility: false,
+                showStateSelect: false
+            },
+            'csf': {
+                title: 'Trámite: Constancia Fiscal SAT',
+                rights: 0,
+                commission: 50,
+                url: 'https://www.sat.gob.mx/aplicaciones/53027/genera-tu-constancia-de-situacion-fiscal',
+                showCurp: false,
+                showNameDetails: false,
+                showSat: true,
+                showUtility: false,
+                showStateSelect: false
+            },
+            'cfe': {
+                title: 'Trámite: Recibo CFE / Luz',
+                rights: 0,
+                commission: 30,
+                url: 'https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/Login.aspx',
+                showCurp: false,
+                showNameDetails: false,
+                showSat: false,
+                showUtility: true,
+                showStateSelect: false
+            },
+            'penales': {
+                title: 'Trámite: Antecedentes Penales',
+                rights: 0, // Depends on state
+                commission: 50,
+                url: 'https://tramites.segob.gob.mx/Gestor/',
+                showCurp: true,
+                showNameDetails: false,
+                showSat: false,
+                showUtility: false,
+                showStateSelect: false
+            },
+            'cita_ine': {
+                title: 'Trámite: Citas del INE',
+                rights: 0,
+                commission: 50,
+                url: 'https://agenda.ine.mx/',
+                showCurp: true,
+                showNameDetails: true,
+                showSat: false,
+                showUtility: false,
+                showStateSelect: false
+            },
+            'cita_sat': {
+                title: 'Trámite: Citas del SAT',
+                rights: 0,
+                commission: 50,
+                url: 'https://citas.sat.gob.mx/',
+                showCurp: true,
+                showNameDetails: false,
+                showSat: false,
+                showUtility: false,
+                showStateSelect: false
+            }
+        };
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            
+            // Toggle active classes in menu
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            const data = tabData[tabId];
+            
+            // Set header title
+            document.getElementById('title-display').innerText = data.title;
+            
+            // Set portal button link
+            document.getElementById('btn-portal').href = data.url;
+
+            // Toggle input blocks
+            toggleBlock('block-curp', data.showCurp);
+            toggleBlock('block-name-details', data.showNameDetails);
+            toggleBlock('block-sat', data.showSat);
+            toggleBlock('block-utility', data.showUtility);
+            toggleBlock('state-price-block', data.showStateSelect);
+
+            calculateTotal();
+        }
+
+        function toggleBlock(id, show) {
+            const el = document.getElementById(id);
+            if (show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        function adjustCopies(amount) {
+            copiesCount = Math.max(0, copiesCount + amount);
+            document.getElementById('copies-count').innerText = copiesCount;
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const data = tabData[currentTab];
+            let rights = data.rights;
+            
+            // If it is Acta de Nacimiento, retrieve official rights fee dynamically from state select
+            if (currentTab === 'acta') {
+                rights = parseInt(document.getElementById('state-price-select').value);
+            }
+
+            const comm = data.commission;
+            const copiesCost = copiesCount * 5;
+            const total = rights + comm + copiesCost;
+
+            document.getElementById('calc-rights').innerText = `$${rights}.00 MXN`;
+            document.getElementById('calc-comm').innerText = `$${comm}.00 MXN`;
+            document.getElementById('calc-total-amount').innerText = `$${total}.00 MXN`;
+        }
+
+        function copyValue(id) {
+            const el = document.getElementById(id);
+            let val = el.value.trim();
+            
+            // Auto uppercase for curp/rfc/names
+            if (id !== 'val-ciec' && id !== 'val-delivery') {
+                val = val.toUpperCase();
+            }
+
+            navigator.clipboard.writeText(val);
+            
+            // Brief visual button feedback
+            const btn = el.nextElementSibling;
+            if (btn && btn.classList.contains('btn-copy')) {
+                const originalText = btn.innerText;
+                btn.innerText = "¡OK!";
+                btn.style.background = "#10b981";
+                btn.style.color = "#fff";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "";
+                    btn.style.color = "";
+                }, 800);
+            }
+        }
+
+        // Initialize view
+        window.onload = () => {
+            switchTab('curp');
+        };
+    </script>
+</body>
+</html>
