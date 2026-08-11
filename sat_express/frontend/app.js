@@ -4,7 +4,8 @@ const API_BASE = window.location.origin + "/api";
 let currentOrderUuid = null;
 let currentIdentifier = ""; // Stores RFC or CURP
 let currentDocType = "csf";
-let currentPrice = 79;
+let currentPrice = 10;
+let currentServiceMode = 'diy';
 
 window.onload = async () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -29,6 +30,27 @@ window.onload = async () => {
     }
 };
 
+
+function toggleServiceMode(mode) {
+    currentServiceMode = mode;
+    currentPrice = (mode === 'diy') ? 10 : 50;
+    
+    // Toggle active borders in UI
+    const labelDiy = document.getElementById("label-mode-diy");
+    const labelFull = document.getElementById("label-mode-full");
+    
+    if (mode === 'diy') {
+        labelDiy.style.border = "2px solid #10b981";
+        labelFull.style.border = "1px solid #e2e8f0";
+    } else {
+        labelDiy.style.border = "1px solid #e2e8f0";
+        labelFull.style.border = "2px solid #10b981";
+    }
+    
+    const submitBtn = document.getElementById("btn-submit-order");
+    submitBtn.innerText = `Continuar al Pago ($${currentPrice}.00 MXN)`;
+}
+
 function toggleDocType(type) {
     currentDocType = type;
     
@@ -51,15 +73,15 @@ function toggleDocType(type) {
     if (type === 'csf' || type === 'opinion') {
         satFields.classList.remove("hidden");
         curpFields.classList.add("hidden");
-        currentPrice = 79;
+        
     } else if (type === 'nss') {
         satFields.classList.add("hidden");
         curpFields.classList.remove("hidden");
-        currentPrice = 79;
+        
     } else if (type === 'curp') {
         satFields.classList.add("hidden");
         curpFields.classList.remove("hidden");
-        currentPrice = 49;
+        
     }
 
     submitBtn.innerText = `Continuar al Pago ($${currentPrice}.00 MXN)`;
@@ -75,7 +97,8 @@ async function startOrder() {
 
     let payload = {
         doc_type: currentDocType,
-        delivery: delivery
+        delivery: delivery,
+        service_mode: currentServiceMode
     };
 
     if (currentDocType === 'csf' || currentDocType === 'opinion') {

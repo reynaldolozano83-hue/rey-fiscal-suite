@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Trámite Express</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #10b981;
+            --accent-light: #d1fae5;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding: 20px;
+        }
+
+        header {
+            max-width: 1000px;
+            margin: 0 auto 30px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-refresh {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-refresh:hover {
+            background-color: var(--primary-light);
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .orders-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .order-card {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            overflow: hidden;
+        }
+
+        .order-header {
+            background: var(--primary);
+            color: var(--white);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-badge {
+            font-weight: 700;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background-color: var(--warning);
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background-color: var(--accent);
+            color: var(--white);
+        }
+
+        .order-body {
+            padding: 20px;
+        }
+
+        .client-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .info-val {
+            font-weight: 600;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .btn-copy {
+            background: var(--accent-light);
+            color: #065f46;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .action-panel {
+            background: #f8fafc;
+            border: 1px dashed var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .government-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #2563eb;
+            color: var(--white);
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .government-link:hover {
+            background: #1d4ed8;
+        }
+
+        .upload-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .btn-file-select {
+            border: 1px solid var(--border);
+            background: var(--white);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .upload-section input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-upload {
+            background: var(--accent);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-upload:hover {
+            background: #059669;
+        }
+
+        .btn-cash-bypass {
+            background: #3b82f6;
+            color: var(--white);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-cash-bypass:hover {
+            background: #2563eb;
+        }
+
+        .no-orders {
+            text-align: center;
+            padding: 40px;
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>⚡</span> Trámite Express Admin
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-refresh" onclick="loadOrders()">🔄 Actualizar Órdenes</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="section-title">
+            <span>Bandeja de Entrada de Trámites</span>
+        </div>
+
+        <div class="orders-container" id="orders-list">
+            <div class="no-orders">Cargando órdenes del sistema...</div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "";
+
+        
+            
+                    async function loadOrders() {
+            const listEl = document.getElementById("orders-list");
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchFilter = urlParams.get("search") ? urlParams.get("search").toUpperCase() : null;
+            
+            // If user is a client (search filter active), hide admin header elements
+            if (searchFilter) {
+                document.querySelector("header").style.display = "none";
+                document.querySelector(".section-title").innerText = "Tu Asistente de Trámite Express";
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/orders`);
+                let orders = await res.json();
+                
+                if (searchFilter) {
+                    orders = orders.filter(o => o.identifier.toUpperCase() === searchFilter);
+                }
+                
+                if (orders.length === 0) {
+                    listEl.innerHTML = '<div class="no-orders">No se encontró tu solicitud en el sistema. Inténtalo de nuevo.</div>';
+                    return;
+                }
+                
+                if (orders.length === 0) {
+                    listEl.innerHTML = '<div class="no-orders">No hay solicitudes pendientes en el sistema.</div>';
+                    return;
+                }
+
+                listEl.innerHTML = "";
+                orders.forEach(order => {
+                    const card = document.createElement("div");
+                    card.className = "order-card";
+                    
+                    const govLinks = {
+                        'curp': 'https://www.gob.mx/curp/',
+                        'nss': 'https://serviciosdigitales.imss.gob.mx/portal-web-external-ui/nss',
+                        'csf': 'https://www.sat.gob.mx/aplicaciones/53027/genera-tu-constancia-de-situacion-fiscal',
+                        'opinion': 'https://www.sat.gob.mx/aplicaciones/53027/genera-tu-constancia-de-situacion-fiscal',
+                        'acta': 'https://www.gob.mx/ActaNacimiento/',
+                        'cfe': 'https://app.cfe.mx/Aplicaciones/CCFE/MiEspacio/Login.aspx'
+                    };
+
+                    const docNames = {
+                        'curp': 'CURP Oficial',
+                        'nss': 'NSS IMSS',
+                        'csf': 'Constancia Fiscal SAT',
+                        'opinion': 'Opinión SAT 32D',
+                        'acta': 'Acta de Nacimiento',
+                        'cfe': 'Recibo CFE / Luz'
+                    };
+
+                    const badgeClass = order.download_status === 'success' ? 'badge-success' : 'badge-pending';
+                    const badgeText = order.download_status === 'success' ? 'Completado' : 'Pendiente';
+                    const govUrl = govLinks[order.doc_type] || 'https://www.gob.mx/';
+
+                    card.innerHTML = `
+                        <div class="order-header">
+                            <div style="font-weight:600;">Orden: ${order.order_uuid.substring(0,8).toUpperCase()} - ${docNames[order.doc_type] || order.doc_type.toUpperCase()}</div>
+                            <div class="order-badge ${badgeClass}">${badgeText}</div>
+                        </div>
+                        <div class="order-body">
+                            <div class="client-info-grid">
+                                <div class="info-item">
+                                    <div>
+                                        <div class="info-label">Identificador (CURP/RFC)</div>
+                                        <div class="info-val">${order.identifier}</div>
+                                    </div>
+                                    <button class="btn-copy" onclick="copyToClipboard('${order.identifier}')">Copiar</button>
+                                </div>
+                                ${order.credentials ? `
+                                <div class="info-item">
+                                    <div>
+                                        <div class="info-label">Clave / CIEC</div>
+                                        <div class="info-val">${order.credentials}</div>
+                                    </div>
+                                    <button class="btn-copy" onclick="copyToClipboard('${order.credentials}')">Copiar</button>
+                                </div>
+                                ` : ''}
+                                <div class="info-item">
+                                    <div>
+                                        <div class="info-label">WhatsApp / Correo</div>
+                                        <div class="info-val">${order.delivery_method}</div>
+                                    </div>
+                                    <button class="btn-copy" onclick="copyToClipboard('${order.delivery_method}')">Copiar</button>
+                                </div>
+                            </div>
+                            
+                            <div class="action-panel">
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                                    <a href="${govUrl}" target="_blank" class="government-link">🌐 Abrir Portal Oficial (${docNames[order.doc_type] || 'Gobierno'})</a>
+                                    ${order.download_status !== 'success' ? `
+                                        <button class="btn-cash-bypass" onclick="markAsPaid('${order.order_uuid}')">💵 Pago Efectivo (Caja)</button>
+                                    ` : ''}
+                                </div>
+                                
+                                ${searchFilter ? '' : `
+                                <div class="upload-section">
+                                    <div class="file-input-wrapper">
+                                        <button class="btn-file-select">📎 Seleccionar PDF Oficial</button>
+                                        <input type="file" id="pdf-${order.order_uuid}" accept="application/pdf" onchange="updateFileLabel('${order.order_uuid}')">
+                                    </div>
+                                    <span id="label-${order.order_uuid}" style="font-size:12px; color:var(--text-light);">Ningún archivo seleccionado</span>
+                                    <button class="btn-upload" onclick="uploadPdf('${order.order_uuid}')">📤 Subir y Enviar PDF</button>
+                                </div>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                    listEl.appendChild(card);
+                });
+            } catch (err) {
+                listEl.innerHTML = `<div class="no-orders" style="color:var(--error);">Error al conectar con el servidor: ${err.message}</div>`;
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.classList.contains('btn-copy')) {
+                const originalText = activeEl.innerText;
+                activeEl.innerText = "¡Copiado!";
+                activeEl.style.background = "#10b981";
+                activeEl.style.color = "#fff";
+                setTimeout(() => {
+                    activeEl.innerText = originalText;
+                    activeEl.style.background = "";
+                    activeEl.style.color = "";
+                }, 1000);
+            }
+        }
+
+        function updateFileLabel(uuid) {
+            const fileInput = document.getElementById(`pdf-${uuid}`);
+            const label = document.getElementById(`label-${uuid}`);
+            if (fileInput.files.length > 0) {
+                label.innerText = fileInput.files[0].name;
+            } else {
+                label.innerText = "Ningún archivo seleccionado";
+            }
+        }
+
+        async function markAsPaid(uuid) {
+            if (!confirm("¿Deseas marcar este trámite como pagado en efectivo?")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/orders/${uuid}/mark-paid`, {
+                    method: 'POST'
+                });
+                if (res.ok) {
+                    alert("Trámite marcado como pagado en efectivo.");
+                    loadOrders();
+                } else {
+                    alert("Error al marcar como pagado.");
+                }
+            } catch (err) {
+                alert("Error de conexión: " + err.message);
+            }
+        }
+
+        async function uploadPdf(uuid) {
+            const fileInput = document.getElementById(`pdf-${uuid}`);
+            if (fileInput.files.length === 0) {
+                alert("Por favor, selecciona un archivo PDF antes de subir.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/orders/${uuid}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    alert("¡PDF oficial subido y enviado al cliente con éxito!");
+                    loadOrders();
+                } else {
+                    alert("Error al subir el archivo PDF.");
+                }
+            } catch (err) {
+                alert("Error de conexión: " + err.message);
+            }
+        }
+
+        window.onload = loadOrders;
+    </script>
+</body>
+</html>
