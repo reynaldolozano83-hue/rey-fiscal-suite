@@ -200,6 +200,12 @@ body {
 }
 
 /* Custom Radio Option Grid */
+.grid-options-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
 .grid-options {
     display: grid;
     grid-template-columns: 1fr 1fr;

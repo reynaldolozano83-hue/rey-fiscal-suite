@@ -8,16 +8,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response, RedirectResponse
 from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
 import uvicorn
 import stripe
 
 import database
 
-app = FastAPI(title="SAT Express Backend", version="1.0.0")
+app = FastAPI(title="Trámite Express Backend", version="1.0.0")
 
 # Stripe Configuration
-# Default to a standard Stripe test key (sk_test_51M3vJpJq5fVjW0...) or read from environment variables
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "sk_test_PLACEHOLDER_KEY_GOES_HERE")
 stripe.api_key = STRIPE_SECRET_KEY
 
@@ -35,21 +35,22 @@ def startup_event():
     database.init_db()
 
 class CreateOrderRequest(BaseModel):
-    rfc: str
-    ciec: str
-    email: str
-    doc_type: str # 'csf' or 'opinion'
+    doc_type: str # 'csf', 'opinion', 'nss', 'curp'
+    delivery: str # email or phone number
+    rfc: Optional[str] = None
+    ciec: Optional[str] = None
+    curp: Optional[str] = None
 
-def process_sat_download(order_uuid: str, rfc: str, ciec: str, doc_type: str):
+def process_sat_download(order_uuid: str, identifier: str, credentials: str, doc_type: str):
     conn = database.get_connection()
     cursor = conn.cursor()
     
-    # Simulate SAT scraping (4 seconds)
+    # Simulate federal server processing (4 seconds)
     import time
     time.sleep(4)
     
     # Mocking a valid PDF document byte stream
-    dummy_pdf = b"%PDF-1.4 ... Real-Time SAT Express Document ..."
+    dummy_pdf = b"%PDF-1.4 ... Real-Time Tramite Express Official Document ..."
     
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     cursor.execute("""
@@ -69,11 +70,15 @@ def create_order(req: CreateOrderRequest):
     order_uuid = str(uuid.uuid4())
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
+    # Determine the identifier (RFC or CURP)
+    identifier = req.rfc.upper() if (req.doc_type in ['csf', 'opinion'] and req.rfc) else (req.curp.upper() if req.curp else "N/A")
+    ciec_val = req.ciec if req.ciec else "N/A"
+    
     # Register the order in database as pending
     cursor.execute("""
         INSERT INTO orders (order_uuid, rfc, ciec_encrypted, email, doc_type, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (order_uuid, req.rfc.upper(), req.ciec, req.email, req.doc_type, now_str))
+    """, (order_uuid, identifier, ciec_val, req.delivery, req.doc_type, now_str))
     
     conn.commit()
     conn.close()
@@ -92,34 +97,40 @@ def create_checkout_session(order_uuid: str):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
         
-    doc_name = "Constancia de Situación Fiscal" if order['doc_type'] == 'csf' else "Opinión de Cumplimiento 32-D"
+    doc_type = order['doc_type']
+    doc_name = "Constancia SAT"
+    price_amount = 7900 # Default $79.00 MXN
     
-    # Base URL of the application
-    # In production, we read the host header or environment variable
+    if doc_type == 'opinion':
+        doc_name = "Opinión SAT 32D"
+    elif doc_type == 'nss':
+        doc_name = "Número de Seguro Social (IMSS)"
+    elif doc_type == 'curp':
+        doc_name = "CURP Oficial"
+        price_amount = 4900 # $49.00 MXN for CURP
+        
     domain_url = "http://127.0.0.1:8030"
     
     try:
-        # Create Stripe Checkout Session (charges $49.00 MXN)
         session = stripe.checkout.Session.create(
-            payment_method_types=['card'], # Can add 'oxxo' if test keys allow
+            payment_method_types=['card'],
             line_items=[{
                 'price_data': {
                     'currency': 'mxn',
                     'product_data': {
-                        'name': f"{doc_name} (SAT)",
-                        'description': f"Trámite express para el RFC: {order['rfc']}",
+                        'name': f"{doc_name}",
+                        'description': f"Trámite express para: {order['rfc']}",
                     },
-                    'unit_amount': 7900, # $49.00 MXN in cents
+                    'unit_amount': price_amount,
                 },
                 'quantity': 1,
             }],
             mode='payment',
             success_url=f"{domain_url}/?status=success&order_uuid={order_uuid}",
             cancel_url=f"{domain_url}/?status=cancel",
-            customer_email=order['email'],
             metadata={
                 "order_uuid": order_uuid,
-                "rfc": order['rfc']
+                "identifier": order['rfc']
             }
         )
         return RedirectResponse(url=session.url)
@@ -138,12 +149,12 @@ def trigger_fulfillment(order_uuid: str, background_tasks: BackgroundTasks):
         conn.close()
         raise HTTPException(status_code=404, detail="Order not found")
         
-    # Mark as paid (since they returned via success URL)
+    # Mark as paid
     cursor.execute("UPDATE orders SET payment_status = 'paid' WHERE order_uuid = ?", (order_uuid,))
     conn.commit()
     conn.close()
     
-    # Trigger background SAT scraper download
+    # Trigger background scraper task
     background_tasks.add_task(process_sat_download, order_uuid, order['rfc'], order['ciec_encrypted'], order['doc_type'])
     
     return {"status": "processing"}
@@ -176,9 +187,16 @@ def download_pdf(order_uuid: str):
     conn.close()
     
     if not order or not order['pdf_data']:
-        raise HTTPException(status_code=404, detail="PDF document not ready or order unpaid.")
+        raise HTTPException(status_code=404, detail="PDF document not ready.")
         
-    filename = f"Constancia_{order['rfc']}.pdf" if order['doc_type'] == 'csf' else f"Opinion_32D_{order['rfc']}.pdf"
+    doc_type = order['doc_type']
+    filename = f"Constancia_{order['rfc']}.pdf"
+    if doc_type == 'opinion':
+        filename = f"Opinion_32D_{order['rfc']}.pdf"
+    elif doc_type == 'nss':
+        filename = f"NSS_IMSS_{order['rfc']}.pdf"
+    elif doc_type == 'curp':
+        filename = f"CURP_{order['rfc']}.pdf"
     
     return Response(
         content=order['pdf_data'],

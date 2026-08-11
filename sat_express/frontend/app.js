@@ -1,11 +1,11 @@
-// SAT Express Frontend Logic with Stripe Integration
+// Trámite Express Frontend Logic
 const API_BASE = window.location.origin + "/api";
 
 let currentOrderUuid = null;
-let currentRfc = "";
+let currentIdentifier = ""; // Stores RFC or CURP
 let currentDocType = "csf";
+let currentPrice = 79;
 
-// Handle redirects and success checking on load
 window.onload = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get("status");
@@ -13,16 +13,10 @@ window.onload = async () => {
     
     if (status === "success" && orderUuid) {
         currentOrderUuid = orderUuid;
-        
-        // Hide initial form, show progress loader screen
         switchScreen("step-form", "step-progress");
-        
-        // Trigger fulfillment backend logic
         try {
             const res = await fetch(`${API_BASE}/orders/${orderUuid}/trigger-fulfillment`);
             const data = await res.json();
-            
-            // Start polling the download status
             startPollingStatus();
         } catch(e) {
             console.error(e);
@@ -30,66 +24,139 @@ window.onload = async () => {
             switchScreen("step-progress", "step-form");
         }
     } else if (status === "cancel") {
-        alert("El pago fue cancelado. Intentalo de nuevo.");
-        // Clear search query parameters
+        alert("El pago fue cancelado. Inténtalo de nuevo.");
         window.history.replaceState({}, document.title, "/");
     }
 };
 
 function toggleDocType(type) {
     currentDocType = type;
-    const csfLabel = document.getElementById("label-csf");
-    const opinionLabel = document.getElementById("label-opinion");
     
-    if (type === 'csf') {
-        csfLabel.classList.add("active");
-        opinionLabel.classList.remove("active");
-    } else {
-        opinionLabel.classList.add("active");
-        csfLabel.classList.remove("active");
+    // Reset active classes
+    const labels = ["csf", "opinion", "nss", "curp"];
+    labels.forEach(l => {
+        const lbl = document.getElementById(`label-${l}`);
+        if (l === type) {
+            lbl.classList.add("active");
+        } else {
+            lbl.classList.remove("active");
+        }
+    });
+
+    // Toggle fields based on type
+    const satFields = document.getElementById("sat-fields");
+    const curpFields = document.getElementById("curp-fields");
+    const submitBtn = document.getElementById("btn-submit-order");
+    
+    if (type === 'csf' || type === 'opinion') {
+        satFields.classList.remove("hidden");
+        curpFields.classList.add("hidden");
+        currentPrice = 79;
+    } else if (type === 'nss') {
+        satFields.classList.add("hidden");
+        curpFields.classList.remove("hidden");
+        currentPrice = 79;
+    } else if (type === 'curp') {
+        satFields.classList.add("hidden");
+        curpFields.classList.remove("hidden");
+        currentPrice = 49;
     }
+
+    submitBtn.innerText = `Continuar al Pago ($${currentPrice}.00 MXN)`;
 }
 
 async function startOrder() {
-    const rfc = document.getElementById("user-rfc").value.trim();
-    const ciec = document.getElementById("user-ciec").value.trim();
-    const email = document.getElementById("user-email").value.trim();
+    const delivery = document.getElementById("user-delivery").value.trim();
     
-    if (!rfc || rfc.length < 12) {
-        alert("Por favor ingresa un RFC válido de 12 o 13 caracteres.");
+    if (!delivery) {
+        alert("Por favor ingresa tu celular o correo electrónico para enviarte tu PDF.");
         return;
     }
-    if (!ciec) {
-        alert("Por favor ingresa tu contraseña SAT (CIEC).");
-        return;
-    }
-    if (!email || !email.includes("@")) {
-        alert("Por favor ingresa un correo electrónico válido para enviar tu PDF.");
-        return;
+
+    let payload = {
+        doc_type: currentDocType,
+        delivery: delivery
+    };
+
+    if (currentDocType === 'csf' || currentDocType === 'opinion') {
+        const rfc = document.getElementById("user-rfc").value.trim();
+        const ciec = document.getElementById("user-ciec").value.trim();
+        
+        if (!rfc || rfc.length < 12) {
+            alert("Por favor ingresa un RFC válido de 12 o 13 caracteres.");
+            return;
+        }
+        if (!ciec) {
+            alert("Por favor ingresa tu contraseña SAT (CIEC).");
+            return;
+        }
+        
+        currentIdentifier = rfc.toUpperCase();
+        payload.rfc = currentIdentifier;
+        payload.ciec = ciec;
+    } else {
+        const curp = document.getElementById("user-curp").value.trim();
+        if (!curp || curp.length < 18) {
+            alert("Por favor ingresa tu CURP oficial de 18 caracteres.");
+            return;
+        }
+        currentIdentifier = curp.toUpperCase();
+        payload.curp = currentIdentifier;
     }
     
-    currentRfc = rfc.toUpperCase();
-    
-    // Create the order on the backend and redirect to Stripe
     try {
         const res = await fetch(`${API_BASE}/orders`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ rfc: rfc, ciec: ciec, email: email, doc_type: currentDocType })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
         
         if (data.status === 'success') {
             currentOrderUuid = data.order_uuid;
             
-            // Redirect to Stripe Checkout Session
-            window.location.href = `${API_BASE}/checkout-session/${currentOrderUuid}`;
+            // Set payment info
+            let docName = "Constancia SAT";
+            if (currentDocType === 'opinion') docName = "Opinión SAT 32D";
+            else if (currentDocType === 'nss') docName = "Número de Seguro Social (NSS)";
+            else if (currentDocType === 'curp') docName = "CURP Oficial";
+
+            document.getElementById("pay-concept").innerText = docName;
+            document.getElementById("pay-amount").innerText = `$${currentPrice}.00 MXN`;
+            document.getElementById("pay-identifier").innerText = currentIdentifier;
+            document.getElementById("btn-pay-simulate").innerText = `Simular Pago Exitoso ($${currentPrice}.00)`;
+            
+            switchScreen("step-form", "step-payment");
         } else {
             alert("Error al iniciar el trámite. Revisa tus datos.");
         }
     } catch(e) {
         console.error(e);
         alert("Error de conexión con el servidor.");
+    }
+}
+
+function cancelPayment() {
+    switchScreen("step-payment", "step-form");
+}
+
+async function triggerPayment() {
+    if (!currentOrderUuid) return;
+    
+    switchScreen("step-payment", "step-progress");
+    
+    try {
+        const res = await fetch(`${API_BASE}/orders/${currentOrderUuid}/pay-simulate`, { method: "POST" });
+        const data = await res.json();
+        if (data.status === 'paid') {
+            startPollingStatus();
+        } else {
+            alert("Error al procesar el pago.");
+            switchScreen("step-progress", "step-payment");
+        }
+    } catch(e) {
+        console.error(e);
+        switchScreen("step-progress", "step-payment");
     }
 }
 
@@ -112,37 +179,38 @@ function startPollingStatus() {
                 clearInterval(pollInterval);
                 bar.style.width = "100%";
                 title.innerText = "¡Trámite Listo!";
-                desc.innerText = "Documento descargado con éxito.";
+                desc.innerText = "Documento obtenido con éxito.";
                 
                 setTimeout(() => {
-                    // Populate success screen details
-                    document.getElementById("success-rfc").innerText = currentRfc || "Consultado";
-                    document.getElementById("success-doc").innerText = currentDocType === 'csf' ? "Constancia de Situación Fiscal" : "Opinión de Cumplimiento 32-D";
+                    document.getElementById("success-identifier").innerText = currentIdentifier || "Consultado";
+                    
+                    let docName = "Constancia SAT";
+                    if (currentDocType === 'opinion') docName = "Opinión SAT 32D";
+                    else if (currentDocType === 'nss') docName = "Número de Seguro Social (NSS)";
+                    else if (currentDocType === 'curp') docName = "CURP Oficial";
+                    document.getElementById("success-doc").innerText = docName;
                     
                     switchScreen("step-progress", "step-success");
-                    
-                    // Clear search parameters from address bar cleanly
                     window.history.replaceState({}, document.title, "/");
                 }, 800);
             } else if (data.download_status === 'failed') {
                 clearInterval(pollInterval);
-                alert("Error de consulta SAT: " + (data.error_message || "La contraseña o el RFC son incorrectos. Por favor, verifica tus datos de acceso en el SAT."));
+                alert("Error de consulta: " + (data.error_message || "No se pudo obtener el documento. Verifica los datos de acceso proporcionados."));
                 switchScreen("step-progress", "step-form");
                 window.history.replaceState({}, document.title, "/");
             } else {
-                // Increment visual status bar
                 progressPercent = Math.min(progressPercent + 20, 90);
                 bar.style.width = `${progressPercent}%`;
                 
                 if (progressPercent === 45) {
-                    title.innerText = "Resolviendo CAPTCHA...";
-                    desc.innerText = "Brincando la validación del portal del SAT.";
+                    title.innerText = "Conectando al Servidor Oficial...";
+                    desc.innerText = "Iniciando sesión segura en las dependencias federales.";
                 } else if (progressPercent === 65) {
-                    title.innerText = "Iniciando descarga...";
-                    desc.innerText = "Obteniendo el archivo PDF oficial de Hacienda.";
+                    title.innerText = "Validando identidad...";
+                    desc.innerText = "Resolviendo la autenticación y CAPTCHA del portal.";
                 } else if (progressPercent === 85) {
-                    title.innerText = "Guardando en servidor...";
-                    desc.innerText = "Almacenando tu PDF de forma segura.";
+                    title.innerText = "Generando PDF oficial...";
+                    desc.innerText = "Obteniendo los archivos encriptados en formato PDF.";
                 }
             }
         } catch(e) {
@@ -160,7 +228,8 @@ function restartFlow() {
     currentOrderUuid = null;
     document.getElementById("user-rfc").value = "";
     document.getElementById("user-ciec").value = "";
-    document.getElementById("user-email").value = "";
+    document.getElementById("user-curp").value = "";
+    document.getElementById("user-delivery").value = "";
     switchScreen("step-success", "step-form");
 }
 
